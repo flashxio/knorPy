@@ -20,12 +20,14 @@
 from distutils.core import setup, Extension
 from Cython.Build import cythonize
 import sys, re
+from exceptions import NotImplementedError
+from Exceptions.runtime import UnsupportedError
 
 _REPO_ISSUES_ = "https://github.com/flashxio/knorPy/issues"
-_OS_SUPPORTED_ = ["linux", "darwin"]
+_OS_SUPPORTED_ = {"linux":"linux", "mac":"darwin"}
 
 patts = []
-for opsys in _OS_SUPPORTED_:
+for opsys in _OS_SUPPORTED_.itervalues():
     patts.append(re.compile("(.*)("+opsys+")(.*)"))
 
 raw_os = sys.platform.lower()
@@ -34,34 +36,34 @@ OS = None
 for patt in patts:
     res = re.match(patt, raw_os)
     if res is not None:
-        OS = res.group(1)
+        OS = res.groups()[1]
         break
 
 if OS is None:
-    sys.stderr.write("Unsupported operating system {}\n." +\
+    raise UnsupportedError("Operating system {}\n." +\
             "Please post an issue at {}\n".format(raw_os, _REPO_ISSUES_))
 
-# TODO: Distinguish actions based on OS
-knor_module = Extension('_pyknori',
-                           sources=['pyknori_wrap.cpp',
-                               "../libkcommon/kmeans_types.cpp"],
-                           extra_compile_args=["-std=gnu++11", "-O3",
-                               "-I..", "-I../libauto", "-I../libman",
-                               "-I../libkcommon", "-fPIC",
-                               "-DSTATISTICS", "-DBOOST_LOG_DYN_LINK",
-                               "-fopenmp"],
-                           extra_link_args=["-L../libauto", "-lauto",
-                               "-L../libman", "-lman", "-L../libkcommon",
-                               "-lkcommon", "-lnuma", "-lpthread", "-fopenmp",
-                               "-lboost_log", "-rdynamic", "-lrt", "-rdynamic",
-                               "-lhwloc", "-lpython2.7"]
-                           )
-
-setup (name = '_pyknori',
-       version = '0.0.1',
-       author      = "Disa Mhembere",
-       maintainer  = "Disa Mhembere",
-       description = """`knor` Python wrapper""",
-       ext_modules = [knor_module],
-       py_modules = ["pyknori"],
-       )
+elif OS == _OS_SUPPORTED_["linux"]:
+    raise NotImplementedError("Linux OS support")
+elif OS == _OS_SUPPORTED_["mac"]:
+    setup(ext_modules = cythonize(Extension(
+	"knor",                                # the extension name
+	sources=["knor.pyx"],
+	language="c++",
+	extra_compile_args=["-std=c++11", "-O3",
+	"-I..", "-I../binding", "-I../libkcommon",
+	"-DBOOST_LOG_DYN_LINK",
+	"-I/usr/local/opt/boost/include",
+	"-DBIND", "-DOSX"],
+	extra_link_args=[
+	"-L../libman", "-lman", "-L../libkcommon",
+	"-lkcommon", "-lpthread", "-lboost_log-mt",
+	"-lboost_system", "-L/usr/local/opt/boost/lib",
+	]),
+	version = '0.0.1',
+	author      = "Disa Mhembere",
+	maintainer  = "Disa Mhembere",
+	description = '''`knor` Python wrapper'''
+	))
+else:
+    assert False, "Unsupported OS NOT correctly caught by knor"
