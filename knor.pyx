@@ -37,7 +37,6 @@ cdef extern from "kmeans_types.hpp" namespace "kpmeans::base":
         kmeans_t(const size_t, const size_t, const size_t,
                  const size_t, const unsigned*,
                  const size_t*, const vector[double]&)
-        const void _print() const
         const void write(const string dirname) const
         void set_params(const size_t nrow, const size_t ncol,
                 const size_t iters, const size_t k)
@@ -58,8 +57,11 @@ cdef class Pykmeans_t:
         self.c_kmeans_t = kmeans_t(nrow, ncol, iters, k, assignments_buf.data(),
                 assignment_count_buf.data(), centroids)
 
-    def _print(self):
-        return self.c_kmeans_t._print()
+    def __repr__(self):
+        s = "Iterations: {}\nk: {}\nSizes:\n{}\nCentroids:\n{}\nCluster:\n{}\n"
+        return s.format(self.get_iters(), self.get_k(),
+                        self.get_sizes(), self.get_centroids(),
+                        self.get_clusters())
 
     def write(self, const string dirname):
         return self.c_kmeans_t.write(dirname)
@@ -77,13 +79,14 @@ cdef class Pykmeans_t:
         return self.c_kmeans_t.ncol
 
     def get_clusters(self):
-        return self.c_kmeans_t.assignments
+        return np.array(self.c_kmeans_t.assignments)
 
     def get_sizes(self):
-        return self.c_kmeans_t.assignment_count
+        return np.array(self.c_kmeans_t.assignment_count)
 
     def get_centroids(self):
-        return self.c_kmeans_t.centroids
+        centroids = np.array(self.c_kmeans_t.centroids)
+        return centroids.reshape(self.get_k(), self.get_ncol())
 
     def __richcmp__(self, other, int op):
         if op == 2: # 2 is __eq__
@@ -101,9 +104,9 @@ cdef class Pykmeans_t:
             const size_t iters, const size_t k):
         return self.c_kmeans_t.set_params(nrow, ncol, iters, k)
 
-# cdef extern from "util.hpp" namespace "kpmeans::base":
-    # cpdef get_num_omp_threads()
-    # cpdef get_num_nodes()
+cdef extern from "util.hpp" namespace "kpmeans::base":
+    cpdef int get_num_omp_threads()
+    cpdef unsigned get_num_nodes()
 
 cdef extern from "knori.hpp" namespace "kpmeans::base":
     kmeans_t kmeans(double* data, const size_t nrow,
@@ -114,8 +117,8 @@ cdef extern from "knori.hpp" namespace "kpmeans::base":
         bint omp, bint numa_opt)
 
 def build_defaults(kwargs):
-    DEFAULT_ARGS = {"max_iters": sys.maxint, "nnodes": 1,
-        "nthread": 2, "p_centers": None,
+    DEFAULT_ARGS = {"max_iters": sys.maxint, "nnodes": get_num_nodes(),
+        "nthread": get_num_omp_threads(), "p_centers": None,
         "init": "kmeanspp", "tolerance": -1, "dist_type": "eucl",
         "omp": False, "numa_opt": False}
 
@@ -132,8 +135,8 @@ def Pykmeans(np.ndarray[double, ndim=2] data,
     """
 
     build_defaults(kwargs)
-    nrow = np.shape(data)[0]
-    ncol = np.shape(data)[1]
+    nrow = data.shape[0]
+    ncol = data.shape[1]
     max_iters = kwargs["max_iters"]
     nnodes = kwargs["nnodes"]
     nthread = kwargs["nthread"]
@@ -157,4 +160,5 @@ def Pykmeans(np.ndarray[double, ndim=2] data,
     else:
         raise NotImplementedError("Only numeric centers supported!\n")
 
-    return Pykmeans_t(ret.nrow, ret.ncol, ret.iters, ret.k)
+    return Pykmeans_t(ret.nrow, ret.ncol, ret.iters, ret.k, ret.assignments,
+            ret.assignment_count, ret.centroids)
