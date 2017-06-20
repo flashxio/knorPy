@@ -51,7 +51,9 @@ elif OS == _OS_SUPPORTED_["mac"]:
 	sources=["knor.pyx"],
 	language="c++",
 	extra_compile_args=["-std=c++11", "-O3",
-	"-I..", "-I../binding", "-I../libkcommon",
+        "-Wno-unused-function",
+	"-I..","-I../libman", "-I../binding", "-I../libkcommon",
+        "-I/usr/local/lib/python2.7/site-packages/numpy/core/include",
 	"-DBOOST_LOG_DYN_LINK",
 	"-I/usr/local/opt/boost/include",
 	"-DBIND", "-DOSX"],
@@ -59,11 +61,7 @@ elif OS == _OS_SUPPORTED_["mac"]:
 	"-L../libman", "-lman", "-L../libkcommon",
 	"-lkcommon", "-lpthread", "-lboost_log-mt",
 	"-lboost_system", "-L/usr/local/opt/boost/lib",
-	]),
-	version = '0.0.1',
-	author      = "Disa Mhembere",
-	maintainer  = "Disa Mhembere",
-	description = '''`knor` Python wrapper'''
+	])
 	))
 else:
     assert False, "Unsupported OS NOT correctly caught by knor"
