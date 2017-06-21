@@ -23,7 +23,7 @@ import numpy as np
 cimport numpy as np
 import ctypes
 import sys
-from exceptions import NotImplementedError
+from exceptions import NotImplementedError, RuntimeError
 
 # Metadata
 __version__ = "0.0.1"
@@ -135,8 +135,6 @@ def Pykmeans(np.ndarray[double, ndim=2] data,
     """
 
     build_defaults(kwargs)
-    nrow = data.shape[0]
-    ncol = data.shape[1]
     max_iters = kwargs["max_iters"]
     nnodes = kwargs["nnodes"]
     nthread = kwargs["nthread"]
@@ -152,11 +150,37 @@ def Pykmeans(np.ndarray[double, ndim=2] data,
         data = data.transpose()
 
     cdef kmeans_t ret
-    # Centers in-memory
-    if isinstance(centers, int) or isinstance(centers, long):
-        ret = kmeans(&data[0,0], nrow, ncol,
-                centers, max_iters, nnodes, nthread, NULL,
-                init, tolerance, dist_type, omp, numa_opt)
+    cdef vector[double] c_centers
+
+    # Data in-memory
+    if isinstance(data, np.ndarray):
+        if data.ndim != 2:
+            raise RuntimeError("[ERROR]: The data matrix must be 2 dimensional")
+
+        nrow = data.shape[0]
+        ncol = data.shape[1]
+
+        # Centers computed
+        if isinstance(centers, int) or isinstance(centers, long):
+            ret = kmeans(&data[0,0], nrow, ncol,
+                    centers, max_iters, nnodes, nthread, NULL,
+                    init, tolerance, dist_type, omp, numa_opt)
+
+        # Centers in-memory
+        if isinstance(centers, np.ndarray):
+            if np.isfortran(centers):
+                centers = centers.transpose()
+
+            for item in centers.flatten():
+                c_centers.push_back(item)
+
+            ret = kmeans(&data[0,0], nrow, ncol, centers.shape[0], max_iters,
+                    nnodes, nthread, &c_centers[0],
+                    "none", tolerance, dist_type, omp, numa_opt)
+        # Centers on disk
+        if isinstance(centers, str):
+            pass
+
     else:
         raise NotImplementedError("Only numeric centers supported!\n")
 
