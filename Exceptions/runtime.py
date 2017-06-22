@@ -21,4 +21,4 @@ from exceptions import RuntimeError
 
 class UnsupportedError(RuntimeError):
     def __init__(self, msg):
-        super(exceptions.RuntimeError, self).__init__("[Unsupprted]: " + msg)
+        super(RuntimeError, self).__init__("[Unsupprted]: " + msg)
