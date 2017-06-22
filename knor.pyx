@@ -23,7 +23,9 @@ import numpy as np
 cimport numpy as np
 import ctypes
 import sys
+from os.path import abspath
 from exceptions import NotImplementedError, RuntimeError
+from Exceptions.runtime import UnsupportedError
 
 # Metadata
 __version__ = "0.0.1"
@@ -116,8 +118,16 @@ cdef extern from "knori.hpp" namespace "kpmeans::base":
         double tolerance, string dist_type,
         bint omp, bint numa_opt)
 
+    kmeans_t kmeans(const string datafn, const size_t nrow,
+        const size_t ncol, const unsigned k,
+        size_t max_iters, unsigned nnodes,
+        unsigned nthread, double* p_centers, string init,
+        double tolerance, string dist_type, bint omp)
+
+# Help
 def build_defaults(kwargs):
-    DEFAULT_ARGS = {"max_iters": sys.maxint, "nnodes": get_num_nodes(),
+    DEFAULT_ARGS = {"nrow": 0, "ncol": 0,
+        "max_iters": sys.maxint, "nnodes": get_num_nodes(),
         "nthread": get_num_omp_threads(), "p_centers": None,
         "init": "kmeanspp", "tolerance": -1, "dist_type": "eucl",
         "omp": False, "numa_opt": False}
@@ -126,14 +136,28 @@ def build_defaults(kwargs):
         if k not in kwargs:
             kwargs[k] = DEFAULT_ARGS[k]
 
-def Pykmeans(np.ndarray[double, ndim=2] data,
-        centers, **kwargs):
+def read(fn, vector[double]& v):
+    f = open(fn, "rb")
+    CHUNKSIZE = 8
+    try:
+        while True:
+            data_read = file.read(CHUNKSIZE)
+            if data_read:
+                v.push_back(<double>data_read)
+            else:
+                break
+    finally:
+        f.close()
+
+def Pykmeans(np.ndarray[double, ndim=2] data, centers, **kwargs):
     """
     @type data: numpy.matrixlib.defmatrix.matrix
     @param data: a numpy matrix, ndarray, list
     @param centers: either the pre-initialized centers or the number of centers
     """
 
+    nrow = data.shape[0]
+    ncol = data.shape[1]
     build_defaults(kwargs)
     max_iters = kwargs["max_iters"]
     nnodes = kwargs["nnodes"]
@@ -152,37 +176,69 @@ def Pykmeans(np.ndarray[double, ndim=2] data,
     cdef kmeans_t ret
     cdef vector[double] c_centers
 
-    # Data in-memory
-    if isinstance(data, np.ndarray):
-        if data.ndim != 2:
-            raise RuntimeError("[ERROR]: The data matrix must be 2 dimensional")
+    # Centers computed
+    if isinstance(centers, int) or isinstance(centers, long):
+        ret = kmeans(&data[0,0], nrow, ncol,
+                centers, max_iters, nnodes, nthread, NULL,
+                init, tolerance, dist_type, omp, numa_opt)
 
-        nrow = data.shape[0]
-        ncol = data.shape[1]
+    # Centers in-memory
+    elif isinstance(centers, np.ndarray):
+        if np.isfortran(centers):
+            centers = centers.transpose()
 
-        # Centers computed
-        if isinstance(centers, int) or isinstance(centers, long):
-            ret = kmeans(&data[0,0], nrow, ncol,
-                    centers, max_iters, nnodes, nthread, NULL,
-                    init, tolerance, dist_type, omp, numa_opt)
+        for item in centers.flatten():
+            c_centers.push_back(item)
 
-        # Centers in-memory
-        if isinstance(centers, np.ndarray):
-            if np.isfortran(centers):
-                centers = centers.transpose()
-
-            for item in centers.flatten():
-                c_centers.push_back(item)
-
-            ret = kmeans(&data[0,0], nrow, ncol, centers.shape[0], max_iters,
-                    nnodes, nthread, &c_centers[0],
-                    "none", tolerance, dist_type, omp, numa_opt)
-        # Centers on disk
-        if isinstance(centers, str):
-            pass
-
+        ret = kmeans(&data[0,0], nrow, ncol, centers.shape[0], max_iters,
+                nnodes, nthread, &c_centers[0],
+                "none", tolerance, dist_type, omp, numa_opt)
     else:
-        raise NotImplementedError("Only numeric centers supported!\n")
+        raise UnsupportedError("centers must be of type `long/int` or " +\
+            "`numpy.ndarray`\n")
+
+    return Pykmeans_t(ret.nrow, ret.ncol, ret.iters, ret.k, ret.assignments,
+            ret.assignment_count, ret.centroids)
+
+def Pykmeans2(string data, centers, **kwargs):
+    build_defaults(kwargs)
+    max_iters = kwargs["max_iters"]
+    nnodes = kwargs["nnodes"]
+    nthread = kwargs["nthread"]
+    cdef p_centers = kwargs["p_centers"]
+    init = kwargs["init"]
+    tolerance = kwargs["tolerance"]
+    dist_type = kwargs["dist_type"]
+    omp = kwargs["omp"]
+    nrow = kwargs["nrow"]
+    ncol = kwargs["ncol"]
+
+    if not nrow or not ncol:
+        raise RuntimeError("Must provide args: `nrow` and `ncol`")
+
+    cdef kmeans_t ret
+    cdef vector[double] c_centers
+
+    # Centers computed
+    if isinstance(centers, int) or isinstance(centers, long):
+        ret = kmeans(abspath(data), nrow, ncol,
+                centers, max_iters, nnodes, nthread, NULL,
+                init, tolerance, dist_type, omp)
+
+    # Centers in-memory
+    elif isinstance(centers, np.ndarray):
+        if np.isfortran(centers):
+            centers = centers.transpose()
+
+        for item in centers.flatten():
+            c_centers.push_back(item)
+
+        ret = kmeans(abspath(data), nrow, ncol, centers.shape[0], max_iters,
+                nnodes, nthread, &c_centers[0],
+                "none", tolerance, dist_type, omp)
+    else:
+        raise UnsupportedError("centers must be of type `long/int` or " +\
+            "`numpy.ndarray`\n")
 
     return Pykmeans_t(ret.nrow, ret.ncol, ret.iters, ret.k, ret.assignments,
             ret.assignment_count, ret.centroids)
