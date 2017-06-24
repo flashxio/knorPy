@@ -18,8 +18,12 @@
 all:
 	python setup.py build_ext --inplace
 
+dist:
+	python setup.py sdist
+
 clean:
 	rm -f *.o
 	rm -rf build
 	rm -f knor.cpp
 	rm -f *.so
+	rm -rf dist

@@ -46,7 +46,25 @@ if OS is None:
 elif OS == _OS_SUPPORTED_["linux"]:
     raise NotImplementedError("Linux OS support")
 elif OS == _OS_SUPPORTED_["mac"]:
-    setup(ext_modules = cythonize(Extension(
+    setup(name="knor",
+        version="0.0.1a1",
+        description="A fast parallel k-means library for Linux and Mac",
+        long_description="The k-means NUMA Optimized Routine library or " +\
+        "knor is a highly optimized and fast library for computing " +\
+        "k-means in parallel with accelerations for Non-Uniform Memory " +\
+        "Access (NUMA) architectures",
+        url="https://github.com/flashxio/knor",
+        author="Disa Mhembere",
+        author_email="disa@jhu.edu",
+        license="Apache License, Version 2.0",
+        classifiers=["Development Status ::3 - Alpha"],
+        keywords="kmeans k-means parallel clustering machine-learning",
+        install_requires=[
+            "numpy",
+            "Cython==0.23.5",
+            "cython==0.23.5",
+            ],
+        ext_modules=cythonize(Extension(
 	"knor",                                # the extension name
 	sources=["knor.pyx"],
 	language="c++",
