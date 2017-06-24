@@ -50,7 +50,7 @@ cdef extern from "kmeans_types.hpp" namespace "kpmeans::base":
         vector[size_t] assignment_count
         vector[double] centroids
 
-cdef class Pykmeans_t:
+cdef class knor_t:
     cdef kmeans_t c_kmeans_t      # hold a C++ instance which we're wrapping
     def __cinit__(self, const size_t nrow, const size_t ncol, const size_t iters,
              const size_t k, vector[unsigned]& assignments_buf,
@@ -126,7 +126,7 @@ cdef extern from "knori.hpp" namespace "kpmeans::base":
 
 # Help
 def build_defaults(kwargs):
-    DEFAULT_ARGS = {"nrow": 0, "ncol": 0,
+    DEFAULT_ARGS = {
         "max_iters": sys.maxint, "nnodes": get_num_nodes(),
         "nthread": get_num_omp_threads(), "p_centers": None,
         "init": "kmeanspp", "tolerance": -1, "dist_type": "eucl",
@@ -149,11 +149,44 @@ def read(fn, vector[double]& v):
     finally:
         f.close()
 
-def Pykmeans(np.ndarray[double, ndim=2] data, centers, **kwargs):
+def Kmeans(np.ndarray[double, ndim=2] data, centers, **kwargs):
     """
-    @type data: numpy.matrixlib.defmatrix.matrix
-    @param data: a numpy matrix, ndarray, list
-    @param centers: either the pre-initialized centers or the number of centers
+    Run the k-means algorithm for data on the local file system.
+    K-means provides *k* disjoint sets for a dataset using a parallel
+    and fast NUMA optimized version of Lloyd's algorithm. The details
+    of which are found in this paper https://arxiv.org/pdf/1606.08905.pdf.
+
+    **Positional Arguments:**
+
+        data:
+            - A path to a file containing a binary row-major double floating
+            point precision "matrix".
+        centers:
+            - Either (i) The number of centers (i.e., k), or (ii) an
+            In-memory data matrix (numpy.ndarray)
+
+    **Keyword Arguments:**
+
+        max_iters:
+            - The maximum number of iteration of k-means to perform
+            (Default: System Max)
+        nthread:
+            - The number of parallel thread to run (Default: # Phys Cores)
+        init:
+            - The type of initialization to use "kmeanspp", "random",
+                "forgy", "none" (Default: "kmeanspp")
+        tolerance:
+            - The convergence tolerance (Default: 0)
+        dist_type: What dissimilarity metric to use "eucl", "cos" (Default:
+        "eucl")
+        omp:
+            - Use (slower) OpenMP threads rather than pthreads` for
+            parallelizations.
+        numa_opt:
+            - When passing `data` as an in-memory data matrix you can
+            optimize memory placement for Linux NUMA machines. *NOTE:*
+            performance may degrade with very large data & it
+            requires 2*memory of that without this.
     """
 
     nrow = data.shape[0]
@@ -197,10 +230,53 @@ def Pykmeans(np.ndarray[double, ndim=2] data, centers, **kwargs):
         raise UnsupportedError("centers must be of type `long/int` or " +\
             "`numpy.ndarray`\n")
 
-    return Pykmeans_t(ret.nrow, ret.ncol, ret.iters, ret.k, ret.assignments,
+    return knor_t(ret.nrow, ret.ncol, ret.iters, ret.k, ret.assignments,
             ret.assignment_count, ret.centroids)
 
-def Pykmeans2(string data, centers, **kwargs):
+def KmeansEM(string data, centers, nrow, ncol, **kwargs):
+    """
+    Run the k-means algorithm for data on the local file system.
+    K-means provides *k* disjoint sets for a dataset using a parallel
+    and fast NUMA optimized version of Lloyd's algorithm. The details
+    of which are found in this paper https://arxiv.org/pdf/1606.08905.pdf.
+
+    **Positional Arguments:**
+
+        data:
+            - A path to a file containing a binary row-major double floating
+            point precision "matrix".
+        centers:
+            - Either (i) The number of centers (i.e., k), or (ii) an
+            In-memory data matrix (numpy.ndarray)
+        nrow:
+            - The number of rows in the data
+        ncol:
+            - The number of columns in the data
+
+    **Keyword Arguments:**
+
+        max_iters:
+            - The maximum number of iteration of k-means to perform
+            (Default: System Max)
+        nthread:
+            - The number of parallel thread to run (Default: # Phys Cores)
+        init:
+            - The type of initialization to use "kmeanspp", "random",
+                "forgy", "none" (Default: "kmeanspp")
+        tolerance:
+            - The convergence tolerance (Default: 0)
+        dist_type: What dissimilarity metric to use "eucl", "cos" (Default:
+        "eucl")
+        omp:
+            - Use (slower) OpenMP threads rather than pthreads` for
+            parallelizations.
+        numa_opt:
+            - When passing `data` as an in-memory data matrix you can
+            optimize memory placement for Linux NUMA machines. *NOTE:*
+            performance may degrade with very large data & it
+            requires 2*memory of that without this.
+    """
+
     build_defaults(kwargs)
     max_iters = kwargs["max_iters"]
     nnodes = kwargs["nnodes"]
@@ -210,11 +286,9 @@ def Pykmeans2(string data, centers, **kwargs):
     tolerance = kwargs["tolerance"]
     dist_type = kwargs["dist_type"]
     omp = kwargs["omp"]
-    nrow = kwargs["nrow"]
-    ncol = kwargs["ncol"]
 
     if not nrow or not ncol:
-        raise RuntimeError("Must provide args: `nrow` and `ncol`")
+        raise RuntimeError("Data dim cannot be 0: `nrow` or `ncol`")
 
     cdef kmeans_t ret
     cdef vector[double] c_centers
@@ -240,5 +314,5 @@ def Pykmeans2(string data, centers, **kwargs):
         raise UnsupportedError("centers must be of type `long/int` or " +\
             "`numpy.ndarray`\n")
 
-    return Pykmeans_t(ret.nrow, ret.ncol, ret.iters, ret.k, ret.assignments,
+    return knor_t(ret.nrow, ret.ncol, ret.iters, ret.k, ret.assignments,
             ret.assignment_count, ret.centroids)
