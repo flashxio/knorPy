@@ -21,6 +21,10 @@ all:
 dist:
 	python setup.py sdist
 
+uptest:
+	twine upload dist/* -r testpypi
+	pip install -i https://testpypi.python.org/pypi knor
+
 clean:
 	rm -f *.o
 	rm -rf build
