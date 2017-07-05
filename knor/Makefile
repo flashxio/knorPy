@@ -31,3 +31,4 @@ clean:
 	rm -f knor.cpp
 	rm -f *.so
 	rm -rf dist
+	rm -rf *.pyc
