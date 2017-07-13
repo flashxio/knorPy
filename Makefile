@@ -16,19 +16,19 @@
 # limitations under the License.
 
 all:
-	python setup.py build_ext --inplace
+	python setup.py build
 
 dist:
 	python setup.py sdist
 
-uptest:
+up:
+	twine upload dist/*
+
+up-test:
 	twine upload dist/* -r testpypi
 	pip install -i https://testpypi.python.org/pypi knor
 
 clean:
-	rm -f *.o
 	rm -rf build
-	rm -f knor.cpp
-	rm -f *.so
+	rm -rf MANIFEST
 	rm -rf dist
-	rm -rf *.pyc

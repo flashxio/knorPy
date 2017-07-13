@@ -1,0 +1,7 @@
+include knor/cknor/libkcommon/*.hpp
+include knor/cknor/libman/*.hpp
+include knor/cknor/libauto/*.hpp
+include knor/*.pyx
+include knor/cknor/binding/*.hpp
+include test/*
+include data/*
