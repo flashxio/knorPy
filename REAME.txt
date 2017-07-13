@@ -1,0 +1,37 @@
+#knorPy
+
+These are Python 2.7 bindings for the standalone machine in-memory portion of the
+`knor` (k-means NUMA Optimized Routines Library) as known as `knori`. See the
+full C++ library for details: https://github.com/flashxio/knor
+
+## Mac Installation
+
+`pip install knor`
+
+## Linux installation
+
+```
+apt-get install -y libnuma-dbg libnuma-dev libnuma1
+pip install knor
+```
+
+## Installation Errors
+
+1.
+```
+File "/private/var/folders/... .../knor/setup.py", line X
+        raise DistutilsSetupError, \
+                                 ^
+    SyntaxError: invalid syntax
+```
+
+Resolution:
+
+1. Make sure you are using Python 2.7 and not Python 3 Trying to install package for
+
+## Documentation
+
+```
+import knor
+help(knor.Kmeans)
+```
