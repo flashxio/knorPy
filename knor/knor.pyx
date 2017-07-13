@@ -24,6 +24,7 @@ cimport numpy as np
 import ctypes
 import sys
 from os.path import abspath
+from os.path import join as pjoin
 from exceptions import NotImplementedError, RuntimeError
 from Exceptions.runtime import UnsupportedError
 
