@@ -69,7 +69,7 @@ if OS == _OS_SUPPORTED_["linux"]:
             "-Wno-unused-function", "-I.","-Iknor/cknor/libman",
             "-Iknor/cknor/libauto",
             "-Iknor/cknor/binding", "-Iknor/cknor/libkcommon",
-            "-DBOOST_LOG_DYN_LINK", "-fopenmp",
+            "-fopenmp",
             "-I/usr/local/lib/python2.7/dist-packages/numpy/core/include",
             "-I/usr/include/python2.7",
             "-DBIND", "-DLINUX"]
@@ -78,7 +78,6 @@ if OS == _OS_SUPPORTED_["linux"]:
             "-lauto",
             "-Lknor/cknor/libkcommon", "-lkcommon", "-lpthread",
             "-lnuma", "-fopenmp",
-            "-lboost_log", "-lboost_system"
             ]
 
 elif OS == _OS_SUPPORTED_["mac"]:
@@ -86,13 +85,11 @@ elif OS == _OS_SUPPORTED_["mac"]:
             "-Wno-unused-function", "-I.","-Iknor/cknor/libman",
             "-Iknor/cknor/binding", "-Iknor/cknor/libkcommon",
             "-I/usr/local/lib/python2.7/site-packages/numpy/core/include",
-            "-DBOOST_LOG_DYN_LINK", "-I/usr/local/opt/boost/include",
             "-DBIND", "-DOSX"]
 
     extra_link_args=["-Lknor/cknor/libman", "-lman",
             "-Lknor/cknor/libkcommon",
-            "-lkcommon", "-lpthread", "-lboost_log-mt",
-            "-lboost_system", "-L/usr/local/opt/boost/lib",
+            "-lkcommon", "-lpthread",
             ]
 else:
     raise RuntimeError("Unsupported OS {}".format(raw_os))
@@ -116,18 +113,15 @@ class knor_clib(build_clib, object):
                 "knor/cknor/binding", "knor/cknor/libkcommon",
                 ]
             self.define = [
-                    ("BOOST_LOG_DYN_LINK", None),
                     ("BIND", None), ("LINUX", None)
                     ]
         elif OS == _OS_SUPPORTED_["mac"]:
             self.include_dirs = [
                 "knor/cknor/libman", "knor/cknor/binding", "knor/cknor/libkcommon",
-                "/usr/local/opt/boost/include",
                 "/usr/local/lib/python2.7/site-packages/numpy/core/include",
                 ]
 
             self.define = [
-                    ("BOOST_LOG_DYN_LINK", None),
                     ("BIND", None), ("OSX", None)
                     ]
 
@@ -177,7 +171,7 @@ class knor_clib(build_clib, object):
 # Run the setup
 setup(
     name="knor",
-    version="0.0.1a10",
+    version="0.0.1a11",
     description="A fast parallel k-means library for Linux and Mac",
     long_description="The k-means NUMA Optimized Routine library or " +\
     "knor is a highly optimized and fast library for computing " +\
