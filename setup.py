@@ -1,5 +1,35 @@
 #!/usr/bin/env python
 
+# Copyright 2017 neurodata (http://neurodata.io/)
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0 #
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+# Created by Disa Mhembere on 2017-07-01.
+# Email: disa@jhu.edu
+
+try:
+    import numpy
+except Exception, msg:
+    raise RuntimeError("knor requires numpy. Run `pip install numpy`." +\
+            " ERROR:".format(msg))
+try:
+    import cython
+    if cython.__version__ != "0.23.5":
+        exit(1)
+except Exception, msg:
+    raise RuntimeError("knor requires cython version 0.23.5. Run `pip " +\
+            "install cython==0.23.5 Cython==0.23.5")
+
 import os
 import sys, re
 from glob import glob
@@ -10,6 +40,7 @@ from distutils.command.build_clib import build_clib
 from distutils.core import setup, Extension
 from Cython.Build import cythonize
 from Cython.Distutils import build_ext
+from utils import find_header_loc
 
 _REPO_ISSUES_ = "https://github.com/flashxio/knorPy/issues"
 _OS_SUPPORTED_ = {"linux":"linux", "mac":"darwin"}
@@ -70,9 +101,10 @@ if OS == _OS_SUPPORTED_["linux"]:
             "-Wno-unused-function", "-I.","-Iknor/cknor/libman",
             "-Iknor/cknor/libauto",
             "-Iknor/cknor/binding", "-Iknor/cknor/libkcommon",
-            "-fopenmp",
-            "-I/usr/include/python2.7",
-            "-DBIND", "-DLINUX"]
+            "-fopenmp"]
+    extra_compile_args.extend(map((lambda s:"-I"+s), find_header_loc("numpy")))
+    extra_compile_args.extend(["-I/usr/include/python2.7",
+            "-DBIND", "-DLINUX"])
 
     extra_link_args=["-Lknor/cknor/libman", "-lman", "-Llknor/cknor/libauto",
             "-lauto",
@@ -83,8 +115,10 @@ if OS == _OS_SUPPORTED_["linux"]:
 elif OS == _OS_SUPPORTED_["mac"]:
     extra_compile_args = ["-std=c++11",
             "-Wno-unused-function", "-I.","-Iknor/cknor/libman",
-            "-Iknor/cknor/binding", "-Iknor/cknor/libkcommon",
-            "-DBIND", "-DOSX"]
+            "-Iknor/cknor/binding", "-Iknor/cknor/libkcommon"]
+    extra_compile_args.extend(map((lambda s:"-I"+s), find_header_loc("numpy")))
+    extra_compile_args.extend(["-I/usr/include/python2.7",
+            "-DBIND", "-DOSX"])
 
     extra_link_args=["-Lknor/cknor/libman", "-lman",
             "-Lknor/cknor/libkcommon",
@@ -111,13 +145,16 @@ class knor_clib(build_clib, object):
                 "knor/cknor/libman", "knor/cknor/libauto",
                 "knor/cknor/binding", "knor/cknor/libkcommon",
                 ]
+            self.include_dirs.extend(find_header_loc("numpy"))
             self.define = [
                     ("BIND", None), ("LINUX", None)
                     ]
         elif OS == _OS_SUPPORTED_["mac"]:
             self.include_dirs = [
-                "knor/cknor/libman", "knor/cknor/binding", "knor/cknor/libkcommon",
+                "knor/cknor/libman", "knor/cknor/binding",
+                "knor/cknor/libkcommon"
                 ]
+            self.include_dirs.extend(find_header_loc("numpy"))
 
             self.define = [
                     ("BIND", None), ("OSX", None)
@@ -169,7 +206,7 @@ class knor_clib(build_clib, object):
 # Run the setup
 setup(
     name="knor",
-    version="0.0.1a12",
+    version="0.0.1a14",
     description="A fast parallel k-means library for Linux and Mac",
     long_description="The k-means NUMA Optimized Routine library or " +\
     "knor is a highly optimized and fast library for computing " +\
