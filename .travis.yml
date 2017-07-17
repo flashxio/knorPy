@@ -14,21 +14,21 @@
 
 language: python
 python:
-	- "2.7"
+  - "2.7"
 sudo: required
 dist:
-	- trusty
-	- xenial
+  - trusty
+  - xenial
 notifications:
-	email: false
+  email: false
 install:
-    - sudo apt-get sudo apt-get -o Dpkg::Options::="--force-confold" --force-yes -y upgrade
-	- sudo apt-get update
-	- sudo apt-get install python-dev
-	- sudo apt-get install python-setuptools
-	- sudo easy_install pip
-	- pip install -r requirements.txt
-	- make install
+  - sudo apt-get sudo apt-get -o Dpkg::Options::="--force-confold" --force-yes -y upgrade
+  - sudo apt-get update
+  - sudo apt-get install python-dev
+  - sudo apt-get install python-setuptools
+  - sudo easy_install pip
+  - pip install -r requirements.txt
+  - make install
 script:
 - cd test && python test.py && cd -
 group: edge
