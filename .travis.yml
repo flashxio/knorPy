@@ -18,7 +18,6 @@ python:
 sudo: required
 dist:
   - trusty
-  - xenial
 notifications:
   email: false
 install:
