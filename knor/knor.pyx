@@ -1,5 +1,3 @@
-# distutils: language = c++
-
 # Copyright 2017 neurodata (http://neurodata.io/)
 # Written by Disa Mhembere (disa@jhu.edu)
 #
