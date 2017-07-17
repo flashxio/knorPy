@@ -3,13 +3,13 @@ try:
 except Exception, msg:
     raise RuntimeError("knor requires numpy. Run `pip install numpy`." +\
             " ERROR:".format(msg))
-try:
-    import cython
-    if cython.__version__ != "0.23.5":
-        print "[WARN]: cython version is wrong: '{}'\n".format(cython.__version__)
-except Exception, msg:
-    raise RuntimeError("knor requires cython version 0.23.5. Run `pip " +\
-            "install cython==0.23.5 Cython==0.23.5")
+# try:
+    # import cython
+    # if cython.__version__ != "0.23.5":
+        # print "[WARN]: cython version is wrong: '{}'\n".format(cython.__version__)
+# except Exception, msg:
+    # raise RuntimeError("knor requires cython version 0.23.5. Run `pip " +\
+            # "install cython==0.23.5 Cython==0.23.5")
 
 import os
 import sys, re
