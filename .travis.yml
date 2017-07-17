@@ -28,7 +28,7 @@ install:
   - sudo apt-get -y install libnuma-dbg libnuma-dev libnuma1
   - sudo easy_install pip
   - sudo pip install -r requirements.txt
-  - sudo make install
+  - sudo pip install .
 script:
 - cd test && python test.py && cd -
 group: edge
