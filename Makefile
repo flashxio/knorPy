@@ -35,3 +35,4 @@ clean:
 	rm -rf build
 	rm -rf MANIFEST
 	rm -rf dist
+	rm *.pyc
