@@ -39,9 +39,11 @@ if OS == _OS_SUPPORTED_["linux"]:
 
     (opt,) = get_config_vars('OPT')
     os.environ['OPT'] = " ".join(
-                flag for flag in opt.split() if flag != '-Wstrict-prototypes'
+                flag for flag in opt.split() if flag != "-Wstrict-prototypes"
                 )
 
+    os.environ['OPT'] = os.environ['OPT'].replace("-DNDEBUG", "")
+    os.environ['OPT'] = os.environ['OPT'].replace("-O2", "-O3")
 ################################ End VarDecl ###################################
 
 # For C++ libraries
