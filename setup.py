@@ -6,7 +6,7 @@ except Exception, msg:
 try:
     import cython
     if cython.__version__ != "0.23.5":
-        printf "cython version is wrong: '{}'\n".format(cython.__version__)
+        print "[WARN]: cython version is wrong: '{}'\n".format(cython.__version__)
 except Exception, msg:
     raise RuntimeError("knor requires cython version 0.23.5. Run `pip " +\
             "install cython==0.23.5 Cython==0.23.5")
