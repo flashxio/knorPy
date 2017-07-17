@@ -19,6 +19,7 @@
 
 from libcpp.vector cimport vector
 from libcpp.string cimport string
+from libc.stdint cimport intptr_t
 import numpy as np
 cimport numpy as np
 import ctypes
@@ -131,7 +132,7 @@ def build_defaults(kwargs):
         "max_iters": sys.maxint, "nnodes": get_num_nodes(),
         "nthread": get_num_omp_threads(), "p_centers": None,
         "init": "kmeanspp", "tolerance": -1, "dist_type": "eucl",
-        "omp": False, "numa_opt": False}
+        "omp": False, "numa_opt": False, "nrow": 0, "ncol": 0}
 
     for k in DEFAULT_ARGS.iterkeys():
         if k not in kwargs:
@@ -150,7 +151,7 @@ def read(fn, vector[double]& v):
     finally:
         f.close()
 
-def Kmeans(np.ndarray[double, ndim=2] data, centers, **kwargs):
+def Kmeans(data, centers, **kwargs):
     """
     Run the k-means algorithm for data on the local file system.
     K-means provides *k* disjoint sets for a dataset using a parallel
@@ -160,14 +161,17 @@ def Kmeans(np.ndarray[double, ndim=2] data, centers, **kwargs):
     **Positional Arguments:**
 
         data:
-            - A path to a file containing a binary row-major double floating
-            point precision "matrix".
+            - Either the path to a file containing a binary row-major
+            double floating point precision numpy "matrix".
         centers:
             - Either (i) The number of centers (i.e., k), or (ii) an
             In-memory data matrix (numpy.ndarray)
 
     **Keyword Arguments:**
-
+        nrow:
+            - The number of rows in the data
+        ncol:
+            - The number of columns in the data
         max_iters:
             - The maximum number of iteration of k-means to perform
             (Default: System Max)
@@ -190,130 +194,83 @@ def Kmeans(np.ndarray[double, ndim=2] data, centers, **kwargs):
             requires 2*memory of that without this.
     """
 
-    nrow = data.shape[0]
-    ncol = data.shape[1]
+    cdef np.ndarray ndarr
+    cdef kmeans_t ret
+    cdef vector[double] c_centers
+    cdef intptr_t addr
+
     build_defaults(kwargs)
     max_iters = kwargs["max_iters"]
     nnodes = kwargs["nnodes"]
     nthread = kwargs["nthread"]
-    cdef p_centers = kwargs["p_centers"]
     init = kwargs["init"]
     tolerance = kwargs["tolerance"]
     dist_type = kwargs["dist_type"]
     omp = kwargs["omp"]
     numa_opt = kwargs["numa_opt"]
 
-    # C order only
-    if np.isfortran(data):
-        data = data.transpose()
+    if isinstance(data, str):
+        nrow = kwargs["nrow"]
+        ncol = kwargs["ncol"]
 
-    cdef kmeans_t ret
-    cdef vector[double] c_centers
+        if not nrow or not ncol:
+            raise RuntimeError("Data dim cannot be 0: `nrow` or `ncol`")
 
-    # Centers computed
-    if isinstance(centers, int) or isinstance(centers, long):
-        ret = kmeans(&data[0,0], nrow, ncol,
-                centers, max_iters, nnodes, nthread, NULL,
-                init, tolerance, dist_type, omp, numa_opt)
+        # Centers computed
+        if isinstance(centers, int) or isinstance(centers, long):
+            ret = kmeans(abspath(data), nrow, ncol,
+                    centers, max_iters, nnodes, nthread, NULL,
+                    init, tolerance, dist_type, omp)
 
-    # Centers in-memory
-    elif isinstance(centers, np.ndarray):
-        if np.isfortran(centers):
-            centers = centers.transpose()
+        # Centers in-memory
+        elif isinstance(centers, np.ndarray):
+            if np.isfortran(centers):
+                centers = centers.transpose()
 
-        for item in centers.flatten():
-            c_centers.push_back(item)
+            for item in centers.flatten():
+                c_centers.push_back(item)
 
-        ret = kmeans(&data[0,0], nrow, ncol, centers.shape[0], max_iters,
-                nnodes, nthread, &c_centers[0],
-                "none", tolerance, dist_type, omp, numa_opt)
+            ret = kmeans(abspath(data), nrow, ncol, centers.shape[0], max_iters,
+                    nnodes, nthread, &c_centers[0],
+                    "none", tolerance, dist_type, omp)
+        else:
+            raise UnsupportedError("centers must be of type `long/int` or " +\
+                "`numpy.ndarray`\n")
+
+    elif isinstance(data, np.ndarray) and data.ndim == 2:
+        # C order only
+        if np.isfortran(data):
+            ndarr = data.transpose()
+        else:
+            ndarr = data
+
+        nrow, ncol = data.shape
+        addr = ctypes.c_void_p(ndarr.ctypes.data).value
+
+        # Centers computed
+        if isinstance(centers, int) or isinstance(centers, long):
+            ret = kmeans(<double*>(addr), nrow, ncol,
+                    centers, max_iters, nnodes, nthread, NULL,
+                    init, tolerance, dist_type, omp, numa_opt)
+
+        # Centers in-memory
+        elif isinstance(centers, np.ndarray):
+            if np.isfortran(centers):
+                centers = centers.transpose()
+
+            for item in centers.flatten():
+                c_centers.push_back(item)
+
+            ret = kmeans(<double*>(addr), nrow, ncol, centers.shape[0], max_iters,
+                    nnodes, nthread, &c_centers[0],
+                    "none", tolerance, dist_type, omp, numa_opt)
+        else:
+            raise UnsupportedError("centers must be of type `long/int` or " +\
+                "`numpy.ndarray`\n")
+    elif isinstance(data, np.ndarray) and data.ndim != 2:
+        raise RuntimeError("`data` must have 2 dimensions!")
     else:
-        raise UnsupportedError("centers must be of type `long/int` or " +\
-            "`numpy.ndarray`\n")
-
-    return knor_t(ret.nrow, ret.ncol, ret.iters, ret.k, ret.assignments,
-            ret.assignment_count, ret.centroids)
-
-def KmeansEM(string data, centers, nrow, ncol, **kwargs):
-    """
-    Run the k-means algorithm for data on the local file system.
-    K-means provides *k* disjoint sets for a dataset using a parallel
-    and fast NUMA optimized version of Lloyd's algorithm. The details
-    of which are found in this paper https://arxiv.org/pdf/1606.08905.pdf.
-
-    **Positional Arguments:**
-
-        data:
-            - A path to a file containing a binary row-major double floating
-            point precision "matrix".
-        centers:
-            - Either (i) The number of centers (i.e., k), or (ii) an
-            In-memory data matrix (numpy.ndarray)
-        nrow:
-            - The number of rows in the data
-        ncol:
-            - The number of columns in the data
-
-    **Keyword Arguments:**
-
-        max_iters:
-            - The maximum number of iteration of k-means to perform
-            (Default: System Max)
-        nthread:
-            - The number of parallel thread to run (Default: # Phys Cores)
-        init:
-            - The type of initialization to use "kmeanspp", "random",
-                "forgy", "none" (Default: "kmeanspp")
-        tolerance:
-            - The convergence tolerance (Default: 0)
-        dist_type: What dissimilarity metric to use "eucl", "cos" (Default:
-        "eucl")
-        omp:
-            - Use (slower) OpenMP threads rather than pthreads` for
-            parallelizations.
-        numa_opt:
-            - When passing `data` as an in-memory data matrix you can
-            optimize memory placement for Linux NUMA machines. *NOTE:*
-            performance may degrade with very large data & it
-            requires 2*memory of that without this.
-    """
-
-    build_defaults(kwargs)
-    max_iters = kwargs["max_iters"]
-    nnodes = kwargs["nnodes"]
-    nthread = kwargs["nthread"]
-    cdef p_centers = kwargs["p_centers"]
-    init = kwargs["init"]
-    tolerance = kwargs["tolerance"]
-    dist_type = kwargs["dist_type"]
-    omp = kwargs["omp"]
-
-    if not nrow or not ncol:
-        raise RuntimeError("Data dim cannot be 0: `nrow` or `ncol`")
-
-    cdef kmeans_t ret
-    cdef vector[double] c_centers
-
-    # Centers computed
-    if isinstance(centers, int) or isinstance(centers, long):
-        ret = kmeans(abspath(data), nrow, ncol,
-                centers, max_iters, nnodes, nthread, NULL,
-                init, tolerance, dist_type, omp)
-
-    # Centers in-memory
-    elif isinstance(centers, np.ndarray):
-        if np.isfortran(centers):
-            centers = centers.transpose()
-
-        for item in centers.flatten():
-            c_centers.push_back(item)
-
-        ret = kmeans(abspath(data), nrow, ncol, centers.shape[0], max_iters,
-                nnodes, nthread, &c_centers[0],
-                "none", tolerance, dist_type, omp)
-    else:
-        raise UnsupportedError("centers must be of type `long/int` or " +\
-            "`numpy.ndarray`\n")
+        raise UnsupportedError("Cannot handle data of type {}".format(type(data)))
 
     return knor_t(ret.nrow, ret.ncol, ret.iters, ret.k, ret.assignments,
             ret.assignment_count, ret.centroids)

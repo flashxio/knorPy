@@ -35,15 +35,15 @@ def dim_test_c_im():
 
 def dexm_test_c_comp():
     centers = 8
-    return knor.KmeansEM(FN, centers, nrow=50, ncol=5)
+    return knor.Kmeans(FN, centers, nrow=50, ncol=5)
 
 def dexm_test_c_im():
     centers = np.random.random((2,5))
-    return knor.KmeansEM(FN, centers, nrow=50, ncol=5)
+    return knor.Kmeans(FN, centers, nrow=50, ncol=5)
 
 def test_err():
     try:
-        knor.KmeansEM(FN, 7.2, nrow=50, ncol=5)
+        knor.Kmeans(FN, 7.2, nrow=50, ncol=5)
     except Exception, msg:
         print "Successful test: CORRECTLY fails with message: {}".format(msg)
 
