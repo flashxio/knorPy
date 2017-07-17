@@ -13,11 +13,15 @@
 #
 
 language: python
+dist: trusty
+sudo: required
 python:
   - "2.7"
-sudo: required
-dist:
-  - trusty
+before_install:
+- test -n $CC  && unset CC
+- test -n $CXX && unset CXX
+compiler:
+- gcc
 notifications:
   email: false
 install:
