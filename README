@@ -15,6 +15,11 @@ apt-get install -y libnuma-dbg libnuma-dev libnuma1
 pip install knor
 ```
 
+## Python Dependencies
+
+- Numpy: `pip install numpy`
+- Cython version 0.23.5 `pip install Cython==0.23.5`
+
 ## Installation Errors
 
 1.
