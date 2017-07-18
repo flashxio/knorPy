@@ -26,7 +26,6 @@ from utils import find_header_loc
 _REPO_ISSUES_ = "https://github.com/flashxio/knorPy/issues"
 _OS_SUPPORTED_ = {"linux":"linux", "mac":"darwin"}
 
-
 patts = []
 for opsys in _OS_SUPPORTED_.itervalues():
     patts.append(re.compile("(.*)("+opsys+")(.*)"))
