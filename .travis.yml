@@ -37,6 +37,5 @@ install:
   - wget https://github.com/cython/cython/archive/0.23.5.tar.gz -O cython.tar.gz && tar xvfz cython.tar.gz && cd cython* && sudo python setup.py install && cd -
   - sudo make install
 script:
-- python -c "import sys; print '\n\n', sys.path"
-- cd test && PYTHONPATH=/usr/local/lib/python2.7/dist-packages/:$PYTHONPATH && python test.py && cd -
+- cd test && python test.py
 group: edge

@@ -1,5 +1,8 @@
 #knorPy
 
+[![Build
+Status](https://travis-ci.org/flashxio/knorPy.svg?branch=master)](https://travis-ci.org/flashxio/knorPy)
+
 These are Python 2.7 bindings for the standalone machine in-memory portion of the
 `knor` (k-means NUMA Optimized Routines Library) as known as `knori`. See the
 full C++ library for details: https://github.com/flashxio/knor
