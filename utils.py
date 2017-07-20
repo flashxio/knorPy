@@ -22,6 +22,9 @@ import os
 from os.path import abspath
 from subprocess import check_output
 
+PYTHON_VERSION = sys.version_info[0]
+
+
 def dir_contains_ext(dirname, filext):
     for fn in os.listdir(dirname):
         split = os.path.splitext(fn)
@@ -37,8 +40,13 @@ def find_header_loc(library, filext=[".h", ".hpp", ".hxx"]):
             # print "Checking dir {}".format(name)
             cmd = "find {} -name {}".format(
                     abspath(os.path.join(name, "*")), library)
-            dirs = list(map((lambda s : s.strip()),
-                    check_output(cmd, shell=True).split("\n")))
+            out = check_output(cmd, shell=True)
+
+            if PYTHON_VERSION == 2:
+                dirs = map((lambda s : s.strip()), out.split("\n"))
+            else:
+                dirs = list(map((lambda s : s.strip()),
+                    out.decode().split("\n")))
 
             for dirname in dirs:
                 if dirname and dir_contains_ext(dirname, filext):

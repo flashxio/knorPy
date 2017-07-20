@@ -17,7 +17,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from exceptions import RuntimeError
+import sys
+PYTHON_VERSION = sys.version_info[0]
+
+if PYTHON_VERSION == 2:
+    from exceptions import RuntimeError
 
 class UnsupportedError(RuntimeError):
     def __init__(self, msg):

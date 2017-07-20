@@ -3,11 +3,15 @@ try:
 except Exception as msg:
     raise RuntimeError("knor requires numpy. Run `pip install numpy`." +\
             " ERROR:".format(msg))
-import os
-import sys, re
+
+import os, sys, re
+PYTHON_VERSION = sys.version_info[0]
+
+if PYTHON_VERSION == 2:
+    from exceptions import NotImplementedError
+    from exceptions import RuntimeError
+
 from glob import glob
-from exceptions import NotImplementedError
-from exceptions import RuntimeError
 from distutils.errors import DistutilsSetupError
 from distutils.command.build_clib import build_clib
 from distutils.core import setup, Extension

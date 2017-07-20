@@ -6,11 +6,15 @@ from libc.stdint cimport intptr_t
 import numpy as np
 cimport numpy as np
 import ctypes
-import sys
+import os, sys
+PYTHON_VERSION = sys.version_info[0]
+
+if PYTHON_VERSION == 2:
+    from exceptions import NotImplementedError, RuntimeError
+    from Exceptions.runtime import UnsupportedError
+
 from os.path import abspath
 from os.path import join as pjoin
-from exceptions import NotImplementedError, RuntimeError
-from Exceptions.runtime import UnsupportedError
 
 # Metadata
 __version__ = "0.0.1"
@@ -120,19 +124,6 @@ def build_defaults(kwargs):
     for k in DEFAULT_ARGS.iterkeys():
         if k not in kwargs:
             kwargs[k] = DEFAULT_ARGS[k]
-
-def read(fn, vector[double]& v):
-    f = open(fn, "rb")
-    CHUNKSIZE = 8
-    try:
-        while True:
-            data_read = file.read(CHUNKSIZE)
-            if data_read:
-                v.push_back(<double>data_read)
-            else:
-                break
-    finally:
-        f.close()
 
 def Kmeans(data, centers, **kwargs):
     """

@@ -17,6 +17,7 @@
 
 all:
 	python setup.py build
+	python3 setup.py build
 
 install:
 	python setup.py install
@@ -36,3 +37,5 @@ clean:
 	rm -rf MANIFEST
 	rm -rf dist
 	rm *.pyc
+	rm -rf __pycache__
+	rm -rf knor/__pycache__
