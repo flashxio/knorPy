@@ -24,7 +24,7 @@ COMMON_INSTALL_LOC = "/usr/local/lib/python2.7/dist-packages"
 if COMMON_INSTALL_LOC not in sys.path:
     sys.path.append(COMMON_INSTALL_LOC)
 
-from knor import knor
+import knor
 import numpy as np
 
 FN = "../data/matrix_r50_c5_rrw.bin"

@@ -80,7 +80,7 @@ if OS == _OS_SUPPORTED_["linux"]:
             "-fopenmp"]
     extra_compile_args.extend(list(map((lambda s:"-I"+s), find_header_loc("numpy"))))
     extra_compile_args.extend(["-I/usr/include/python2.7",
-            "-DBIND", "-DLINUX"])
+            "-DBIND", "-DUSE_NUMA"])
 
     extra_link_args=["-Lknor/cknor/libman", "-lman", "-Llknor/cknor/libauto",
             "-lauto",
@@ -93,8 +93,7 @@ elif OS == _OS_SUPPORTED_["mac"]:
             "-Wno-unused-function", "-I.","-Iknor/cknor/libman",
             "-Iknor/cknor/binding", "-Iknor/cknor/libkcommon"]
     extra_compile_args.extend(list(map((lambda s:"-I"+s), find_header_loc("numpy"))))
-    extra_compile_args.extend(["-I/usr/include/python2.7",
-            "-DBIND", "-DOSX"])
+    extra_compile_args.extend(["-I/usr/include/python2.7", "-DBIND"])
 
     extra_link_args=["-Lknor/cknor/libman", "-lman",
             "-Lknor/cknor/libkcommon",
@@ -123,7 +122,7 @@ class knor_clib(build_clib, object):
                 ]
             self.include_dirs.extend(find_header_loc("numpy"))
             self.define = [
-                    ("BIND", None), ("LINUX", None)
+                    ("BIND", None), ("USE_NUMA", None)
                     ]
         elif OS == _OS_SUPPORTED_["mac"]:
             self.include_dirs = [
@@ -133,7 +132,7 @@ class knor_clib(build_clib, object):
             self.include_dirs.extend(find_header_loc("numpy"))
 
             self.define = [
-                    ("BIND", None), ("OSX", None)
+                    ("BIND", None)
                     ]
 
         else:
