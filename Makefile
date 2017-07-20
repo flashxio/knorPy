@@ -15,8 +15,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-all:
+all: py2 py3
+
+py2:
 	python setup.py build
+py3:
 	python3 setup.py build
 
 install:

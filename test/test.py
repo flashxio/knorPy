@@ -49,16 +49,16 @@ def dexm_test_c_im():
 def test_err():
     try:
         knor.Kmeans(FN, 7.2, nrow=50, ncol=5)
-    except Exception, msg:
-        print "Successful test: CORRECTLY fails with message: {}".format(msg)
+    except Exception as msg:
+        print(("Successful test: CORRECTLY fails with message: {}".format(msg)))
 
-print "\n\n*************** TEST 1/5 ******************\n\n"
-print dim_test_c_comp()
-print "\n\n*************** TEST 2/5 ******************\n\n"
-print dim_test_c_im()
-print "\n\n*************** TEST 3/5 ******************\n\n"
-print dexm_test_c_comp()
-print "\n\n*************** TEST 4/5 ******************\n\n"
-print dexm_test_c_im()
-print "\n\n*************** TEST 5/5 ******************\n\n"
+print("\n\n*************** TEST 1/5 ******************\n\n")
+print(dim_test_c_comp())
+print("\n\n*************** TEST 2/5 ******************\n\n")
+print(dim_test_c_im())
+print("\n\n*************** TEST 3/5 ******************\n\n")
+print(dexm_test_c_comp())
+print("\n\n*************** TEST 4/5 ******************\n\n")
+print(dexm_test_c_im())
+print("\n\n*************** TEST 5/5 ******************\n\n")
 test_err()

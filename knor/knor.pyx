@@ -116,7 +116,7 @@ cdef extern from "knori.hpp" namespace "kpmeans::base":
 # Help
 def build_defaults(kwargs):
     DEFAULT_ARGS = {
-        "max_iters": sys.maxint, "nnodes": get_num_nodes(),
+        "max_iters": sys.maxsize, "nnodes": get_num_nodes(),
         "nthread": get_num_omp_threads(), "p_centers": None,
         "init": "kmeanspp", "tolerance": -1, "dist_type": "eucl",
         "omp": False, "numa_opt": False, "nrow": 0, "ncol": 0}
@@ -124,6 +124,12 @@ def build_defaults(kwargs):
     for k in DEFAULT_ARGS.iterkeys():
         if k not in kwargs:
             kwargs[k] = DEFAULT_ARGS[k]
+
+def none():
+    if PYTHON_VERSION == 2:
+        return "none"
+    else:
+        return bytearray("none", "utf8")
 
 def Kmeans(data, centers, **kwargs):
     """
@@ -177,22 +183,32 @@ def Kmeans(data, centers, **kwargs):
     max_iters = kwargs["max_iters"]
     nnodes = kwargs["nnodes"]
     nthread = kwargs["nthread"]
-    init = kwargs["init"]
     tolerance = kwargs["tolerance"]
-    dist_type = kwargs["dist_type"]
     omp = kwargs["omp"]
     numa_opt = kwargs["numa_opt"]
+
+    if PYTHON_VERSION == 2:
+        init = kwargs["init"]
+        dist_type = kwargs["dist_type"]
+    else:
+        init = bytearray(kwargs["init"], "utf8")
+        dist_type = bytearray(kwargs["dist_type"], "utf8")
 
     if isinstance(data, str):
         nrow = kwargs["nrow"]
         ncol = kwargs["ncol"]
+
+        if PYTHON_VERSION == 2:
+            data = abspath(data)
+        else:
+            data = bytearray(abspath(data), "utf8")
 
         if not nrow or not ncol:
             raise RuntimeError("Data dim cannot be 0: `nrow` or `ncol`")
 
         # Centers computed
         if isinstance(centers, int) or isinstance(centers, long):
-            ret = kmeans(abspath(data), nrow, ncol,
+            ret = kmeans(data, nrow, ncol,
                     centers, max_iters, nnodes, nthread, NULL,
                     init, tolerance, dist_type, omp)
 
@@ -204,9 +220,9 @@ def Kmeans(data, centers, **kwargs):
             for item in centers.flatten():
                 c_centers.push_back(item)
 
-            ret = kmeans(abspath(data), nrow, ncol, centers.shape[0], max_iters,
+            ret = kmeans(data, nrow, ncol, centers.shape[0], max_iters,
                     nnodes, nthread, &c_centers[0],
-                    "none", tolerance, dist_type, omp)
+                    none(), tolerance, dist_type, omp)
         else:
             raise UnsupportedError("centers must be of type `long/int` or " +\
                 "`numpy.ndarray`\n")
@@ -237,7 +253,7 @@ def Kmeans(data, centers, **kwargs):
 
             ret = kmeans(<double*>(addr), nrow, ncol, centers.shape[0], max_iters,
                     nnodes, nthread, &c_centers[0],
-                    "none", tolerance, dist_type, omp, numa_opt)
+                    none(), tolerance, dist_type, omp, numa_opt)
         else:
             raise UnsupportedError("centers must be of type `long/int` or " +\
                 "`numpy.ndarray`\n")
