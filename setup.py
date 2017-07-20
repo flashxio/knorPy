@@ -1,16 +1,8 @@
 try:
     import numpy
-except Exception, msg:
+except Exception as msg:
     raise RuntimeError("knor requires numpy. Run `pip install numpy`." +\
             " ERROR:".format(msg))
-# try:
-    # import cython
-    # if cython.__version__ != "0.23.5":
-        # print "[WARN]: cython version is wrong: '{}'\n".format(cython.__version__)
-# except Exception, msg:
-    # raise RuntimeError("knor requires cython version 0.23.5. Run `pip " +\
-            # "install cython==0.23.5 Cython==0.23.5")
-
 import os
 import sys, re
 from glob import glob
@@ -27,7 +19,7 @@ _REPO_ISSUES_ = "https://github.com/flashxio/knorPy/issues"
 _OS_SUPPORTED_ = {"linux":"linux", "mac":"darwin"}
 
 patts = []
-for opsys in _OS_SUPPORTED_.itervalues():
+for opsys in _OS_SUPPORTED_.values():
     patts.append(re.compile("(.*)("+opsys+")(.*)"))
 
 raw_os = sys.platform.lower()
@@ -39,7 +31,7 @@ for patt in patts:
         OS = res.groups()[1]
         break
 
-if OS not in _OS_SUPPORTED_.values():
+if OS not in list(_OS_SUPPORTED_.values()):
     raise RuntimeError("Operating system {}\n." +\
             "Please post an issue at {}\n".format(raw_os, _REPO_ISSUES_))
 
@@ -82,7 +74,7 @@ if OS == _OS_SUPPORTED_["linux"]:
             "-Iknor/cknor/libauto",
             "-Iknor/cknor/binding", "-Iknor/cknor/libkcommon",
             "-fopenmp"]
-    extra_compile_args.extend(map((lambda s:"-I"+s), find_header_loc("numpy")))
+    extra_compile_args.extend(list(map((lambda s:"-I"+s), find_header_loc("numpy"))))
     extra_compile_args.extend(["-I/usr/include/python2.7",
             "-DBIND", "-DLINUX"])
 
@@ -96,7 +88,7 @@ elif OS == _OS_SUPPORTED_["mac"]:
     extra_compile_args = ["-std=c++11",
             "-Wno-unused-function", "-I.","-Iknor/cknor/libman",
             "-Iknor/cknor/binding", "-Iknor/cknor/libkcommon"]
-    extra_compile_args.extend(map((lambda s:"-I"+s), find_header_loc("numpy")))
+    extra_compile_args.extend(list(map((lambda s:"-I"+s), find_header_loc("numpy"))))
     extra_compile_args.extend(["-I/usr/include/python2.7",
             "-DBIND", "-DOSX"])
 
@@ -147,13 +139,12 @@ class knor_clib(build_clib, object):
         for (lib_name, build_info) in libraries:
             sources = build_info.get("sources")
             if sources is None or not isinstance(sources, (list, tuple)):
-                raise DistutilsSetupError, \
-                      ("in \"libraries\" option (library \"%s\"), " +
+                raise DistutilsSetupError(("in \"libraries\" option (library \"%s\"), " +
                        "\"sources\" must be present and must be " +
-                       "a list of source filenames") % lib_name
+                       "a list of source filenames") % lib_name)
             sources = list(sources)
 
-            print "building \"%s\" library" % lib_name
+            print("building \"%s\" library" % lib_name)
 
             # First, compile the source code to object files in the library
             # directory.  (This should probably change to putting object

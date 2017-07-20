@@ -37,8 +37,8 @@ def find_header_loc(library, filext=[".h", ".hpp", ".hxx"]):
             # print "Checking dir {}".format(name)
             cmd = "find {} -name {}".format(
                     abspath(os.path.join(name, "*")), library)
-            dirs = map((lambda s : s.strip()),
-                    check_output(cmd, shell=True).split("\n"))
+            dirs = list(map((lambda s : s.strip()),
+                    check_output(cmd, shell=True).split("\n")))
 
             for dirname in dirs:
                 if dirname and dir_contains_ext(dirname, filext):
