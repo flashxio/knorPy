@@ -11,7 +11,8 @@ PYTHON_VERSION = sys.version_info[0]
 
 if PYTHON_VERSION == 2:
     from exceptions import NotImplementedError, RuntimeError
-    from Exceptions.runtime import UnsupportedError
+
+from Exceptions.runtime import UnsupportedError
 
 from os.path import abspath
 from os.path import join as pjoin
