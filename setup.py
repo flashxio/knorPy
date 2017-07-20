@@ -1,9 +1,3 @@
-try:
-    import numpy
-except Exception as msg:
-    raise RuntimeError("knor requires numpy. Run `pip install numpy`." +\
-            " ERROR:".format(msg))
-
 import os, sys, re
 PYTHON_VERSION = sys.version_info[0]
 

@@ -28,15 +28,16 @@ notifications:
 install:
   - sudo apt-get -y update
   - sudo apt-get -y upgrade
-  - sudo apt-get -y install build-essential
-  - sudo apt-get -y install python-dev
   - sudo apt-get -y install python-setuptools
   - sudo apt-get -y install libnuma-dbg libnuma-dev libnuma1
-  - sudo apt-get -y install wget
   - sudo easy_install pip
   - sudo pip install -r requirements.txt
-  - wget https://github.com/cython/cython/archive/0.23.5.tar.gz -O cython.tar.gz && tar xvfz cython.tar.gz && cd cython* && sudo python setup.py install && cd -
-  - sudo make install
+  - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then wget https://github.com/cython/cython/archive/0.23.5.tar.gz -O cython.tar.gz && tar xvfz cython.tar.gz && cd cython* && sudo python setup.py install && cd -; fi
+  - if [[ $TRAVIS_PYTHON_VERSION == 3.5 ]]; then wget https://github.com/cython/cython/archive/0.23.5.tar.gz -O cython.tar.gz && tar xvfz cython.tar.gz && cd cython* && sudo python3 setup.py install && cd -; fi
+  - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then python setup.py install; fi
+  - if [[ $TRAVIS_PYTHON_VERSION == 3.5 ]]; then python3 setup.py install; fi
+
 script:
-- cd test && python test.py
+- if [[ $TRAVIS_PYTHON_VERSION == 2.6 ]]; then cd test && python test.py; fi
+- if [[ $TRAVIS_PYTHON_VERSION == 3.5 ]]; then cd test && python3 test.py; fi
 group: edge
