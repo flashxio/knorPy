@@ -72,9 +72,8 @@ if OS == _OS_SUPPORTED_["linux"]:
             "-Iknor/cknor/libauto",
             "-Iknor/cknor/binding", "-Iknor/cknor/libkcommon",
             "-fopenmp"]
-    extra_compile_args.extend(list(map((lambda s:"-I"+s), find_header_loc("numpy"))))
-    extra_compile_args.extend(["-I/usr/include/python2.7",
-            "-DBIND", "-DUSE_NUMA"])
+    extra_compile_args.append("-I"+find_header_loc("numpy"))
+    extra_compile_args.extend(["-DBIND", "-DUSE_NUMA"])
 
     extra_link_args=["-Lknor/cknor/libman", "-lman", "-Llknor/cknor/libauto",
             "-lauto",
@@ -86,8 +85,15 @@ elif OS == _OS_SUPPORTED_["mac"]:
     extra_compile_args = ["-std=c++11",
             "-Wno-unused-function", "-I.","-Iknor/cknor/libman",
             "-Iknor/cknor/binding", "-Iknor/cknor/libkcommon"]
-    extra_compile_args.extend(list(map((lambda s:"-I"+s), find_header_loc("numpy"))))
-    extra_compile_args.extend(["-I/usr/include/python2.7", "-DBIND"])
+
+    extra_compile_args.append("-I"+find_header_loc("numpy"))
+
+    if PYTHON_VERSION == 2:
+        extra_compile_args.append("-I/usr/include/python2.7")
+    else:
+        extra_compile_args.append("-I/usr/include/python3.5")
+
+    extra_compile_args.append("-DBIND")
 
     extra_link_args=["-Lknor/cknor/libman", "-lman",
             "-Lknor/cknor/libkcommon",
@@ -114,7 +120,7 @@ class knor_clib(build_clib, object):
                 "knor/cknor/libman", "knor/cknor/libauto",
                 "knor/cknor/binding", "knor/cknor/libkcommon",
                 ]
-            self.include_dirs.extend(find_header_loc("numpy"))
+            self.include_dirs.append(find_header_loc("numpy"))
             self.define = [
                     ("BIND", None), ("USE_NUMA", None)
                     ]
@@ -123,7 +129,7 @@ class knor_clib(build_clib, object):
                 "knor/cknor/libman", "knor/cknor/binding",
                 "knor/cknor/libkcommon"
                 ]
-            self.include_dirs.extend(find_header_loc("numpy"))
+            self.include_dirs.append(find_header_loc("numpy"))
 
             self.define = [
                     ("BIND", None)

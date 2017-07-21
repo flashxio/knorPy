@@ -33,8 +33,6 @@ def dir_contains_ext(dirname, filext):
     return False
 
 def find_header_loc(library, filext=[".h", ".hpp", ".hxx"]):
-    paths = []
-
     for name in sys.path:
         if os.path.isdir(name):
             # print "Checking dir {}".format(name)
@@ -50,5 +48,6 @@ def find_header_loc(library, filext=[".h", ".hpp", ".hxx"]):
 
             for dirname in dirs:
                 if dirname and dir_contains_ext(dirname, filext):
-                    paths.append(os.path.dirname(os.path.abspath(dirname)))
-    return paths
+                    return os.path.dirname(os.path.abspath(dirname))
+
+    return ""
