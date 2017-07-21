@@ -193,8 +193,8 @@ setup(
     keywords="kmeans k-means parallel clustering machine-learning",
     install_requires=[
         "numpy",
-        "Cython==0.23.5",
-        "cython==0.23.5",
+        "Cython>=0.26",
+        "cython>=0.26",
         ],
     package_dir = {"knor": "knor"},
     packages=["knor", "knor.Exceptions"],

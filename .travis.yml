@@ -31,7 +31,7 @@ install:
   - sudo apt-get -y install python-setuptools
   - sudo apt-get -y install libnuma-dbg libnuma-dev libnuma1
   - sudo pip install -r requirements.txt
-  - wget https://github.com/cython/cython/archive/0.23.5.tar.gz -O cython.tar.gz && tar xvfz cython.tar.gz && cd cython* && sudo python setup.py install && cd -
+  - wget https://github.com/cython/cython/archive/0.26.tar.gz -O cython.tar.gz && tar xvfz cython.tar.gz && cd cython* && sudo python setup.py install && cd -
   - sudo make install
 script:
 - cd test && python test.py
