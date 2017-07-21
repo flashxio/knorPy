@@ -180,7 +180,7 @@ class knor_clib(build_clib, object):
 # Run the setup
 setup(
     name="knor",
-    version="0.0.1a16",
+    version="0.0.1a17",
     description="A fast parallel k-means library for Linux and Mac",
     long_description="The k-means NUMA Optimized Routine library or " +\
     "knor is a highly optimized and fast library for computing " +\
