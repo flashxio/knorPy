@@ -20,7 +20,13 @@
 # Note these tests only work from the knor repo
 
 import sys
-COMMON_INSTALL_LOC = "/usr/local/lib/python2.7/dist-packages"
+
+PYTHON_VERSION = sys.version_info[0]
+if PYTHON_VERSION == 2:
+    COMMON_INSTALL_LOC = "/usr/local/lib/python2.7/dist-packages"
+elif PYTHON_VERSION == 3:
+    COMMON_INSTALL_LOC = "/usr/local/lib/python3.5/dist-packages"
+
 if COMMON_INSTALL_LOC not in sys.path:
     sys.path.append(COMMON_INSTALL_LOC)
 
