@@ -35,5 +35,5 @@ install:
   #- wget https://github.com/cython/cython/archive/0.23.5.tar.gz -O cython.tar.gz && tar xvfz cython.tar.gz && cd cython* && sudo python setup.py install && cd -
   #- sudo make install
 script:
-- python -c "import os; print os.environ[\"TRAVIS_PYTHON_VERSION\"]"
+- python -c "import os; print(os.environ[\"TRAVIS_PYTHON_VERSION\"])"
 group: edge
