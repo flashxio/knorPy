@@ -15,7 +15,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-all: py2 py3
+HAS_PY3 := $(shell which python3)
+ifeq ($(HAS_PY3),)
+	FILES := py2
+else
+	FILES := py2 py3
+endif
+
+all: $(FILES)
 
 py2:
 	python setup.py build
