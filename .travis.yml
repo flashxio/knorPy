@@ -26,8 +26,6 @@ compiler:
 notifications:
   email: false
 install:
-  - sudo apt-get -y update
-  - sudo apt-get -y upgrade
   - sudo apt-get -y install python-setuptools
   - sudo apt-get -y install libnuma-dbg libnuma-dev libnuma1
   - sudo pip install -r requirements.txt
