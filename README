@@ -93,6 +93,19 @@ unable to execute 'x86_64-linux-gnu-gcc': No such file or directory
 ### Solution
 Install the `gcc` compiler via `apt-get install build-essential` 
 
+5.
+
+```
+ fatal error: Python.h: No such file or directory compilation terminated.
+```
+
+### Solution
+Install the development headers for the version on Python you intend to install knor e.g
+
+```
+apt-get install python-dev  # for python2.x installs
+apt-get install python3-dev  # for python3.x installs
+```
 
 ## Documentation
 
