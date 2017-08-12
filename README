@@ -83,6 +83,16 @@ ImportError: No module named Cython.Build
 ### Solution
 Install Cython via `pip install -U cython`. It is necessary to bridge the gap between the underlying C++ and the Python bindings.
 
+4.
+
+```
+unable to execute 'x86_64-linux-gnu-gcc': No such file or directory
+  error: command 'x86_64-linux-gnu-gcc' failed with exit status 1
+```
+
+### Solution
+Install the `gcc` compiler via `apt-get install build-essential` 
+
 
 ## Documentation
 
