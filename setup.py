@@ -6,12 +6,18 @@ if PYTHON_VERSION == 2:
     from exceptions import RuntimeError
 
 from glob import glob
-from distutils.errors import DistutilsSetupError
-from distutils.command.build_clib import build_clib
-from distutils.core import setup, Extension
-from Cython.Build import cythonize
-from Cython.Distutils import build_ext
-from utils import find_header_loc
+# from distutils.errors import DistutilsSetupError
+# from distutils.command.build_clib import build_clib
+# from distutils.core import setup, Extension
+# from Cython.Build import cythonize
+# from Cython.Distutils import build_ext
+# from utils import find_header_loc
+from setuptools import setup, Extension
+from setuptools.command.build_ext import build_ext
+from setuptools.command.build_clib import build_clib
+import setuptools
+
+__version__ = '0.0.2'
 
 _REPO_ISSUES_ = "https://github.com/flashxio/knorPy/issues"
 _OS_SUPPORTED_ = {"linux":"linux", "mac":"darwin"}
@@ -33,7 +39,6 @@ if OS not in list(_OS_SUPPORTED_.values()):
     raise RuntimeError("Operating system {}\n." +\
             "Please post an issue at {}\n".format(raw_os, _REPO_ISSUES_))
 
-
 # Hack to stop -Wstrict-prototypes warning on linux
 if OS == _OS_SUPPORTED_["linux"]:
     from distutils import sysconfig
@@ -46,6 +51,77 @@ if OS == _OS_SUPPORTED_["linux"]:
 
 ################################ End VarDecl ###################################
 
+class get_pybind_include(object):
+    """Helper class to determine the pybind11 include path
+
+    The purpose of this class is to postpone importing pybind11
+    until it is actually installed, so that the ``get_include()``
+    method can be invoked. """
+
+    def __init__(self, user=False):
+        self.user = user
+
+    def __str__(self):
+        import pybind11
+        return pybind11.get_include(self.user)
+
+# As of Python 3.6, CCompiler has a `has_flag` method.
+# cf http://bugs.python.org/issue26689
+def has_flag(compiler, flagname):
+    """Return a boolean indicating whether a flag name is supported on
+    the specified compiler.
+    """
+    import tempfile
+    with tempfile.NamedTemporaryFile('w', suffix='.cpp') as f:
+        f.write('int main (int argc, char **argv) { return 0; }')
+        try:
+            compiler.compile([f.name], extra_postargs=[flagname])
+        except setuptools.distutils.errors.CompileError:
+            return False
+    return True
+
+
+def cpp_flag(compiler):
+    """Return the -std=c++[11/14] compiler flag.
+
+    The c++14 is prefered over c++11 (when it is available).
+    """
+    if has_flag(compiler, '-std=c++14'):
+        return '-std=c++14'
+    elif has_flag(compiler, '-std=c++11'):
+        return '-std=c++11'
+    else:
+        raise RuntimeError('Unsupported compiler -- at least C++11 support '
+                           'is needed!')
+
+class BuildExt(build_ext):
+    """A custom build extension for adding compiler-specific options."""
+    c_opts = {
+        'msvc': ['/EHsc'],
+        'unix': [],
+    }
+
+    if sys.platform == 'darwin':
+        c_opts['unix'] += ['-stdlib=libc++', '-mmacosx-version-min=10.7']
+
+    def build_extensions(self):
+        ct = self.compiler.compiler_type
+        opts = self.c_opts.get(ct, [])
+
+        # Add Specific build dependencies
+        # opts.append("-I/usr/include/boost")
+
+        if ct == 'unix':
+            opts.append('-DVERSION_INFO="%s"' % self.distribution.get_version())
+            opts.append(cpp_flag(self.compiler))
+            if has_flag(self.compiler, '-fvisibility=hidden'):
+                opts.append('-fvisibility=hidden')
+        elif ct == 'msvc':
+            opts.append('/DVERSION_INFO=\\"%s\\"' % self.distribution.get_version())
+        for ext in self.extensions:
+            ext.extra_compile_args = opts
+        build_ext.build_extensions(self)
+
 # For C++ libraries
 libkcommon = ("kcommon",
         {"sources": glob(os.path.join("knor", "cknor", "libkcommon", "*.cpp"))})
@@ -57,12 +133,12 @@ libraries = [libkcommon, libman]
 
 if OS == _OS_SUPPORTED_["linux"]:
     libauto = ("auto",
-            {"sources": glob(os.path.join("knor", "cknor", "libauto", "*.cpp"))})
+           {"sources": glob(os.path.join("knor", "cknor", "libauto", "*.cpp"))})
     libraries.append(libauto)
 
 # Add some sources + cython modules
 sources = glob(os.path.join("knor", "cknor", "binding", "*.cpp"))
-sources.append(os.path.join("knor", "knor.pyx"))
+sources.append(os.path.join("knor", "knor.cpp"))
 
 # Compile & link arguments
 if OS == _OS_SUPPORTED_["linux"]:
@@ -72,7 +148,7 @@ if OS == _OS_SUPPORTED_["linux"]:
             "-Iknor/cknor/libauto",
             "-Iknor/cknor/binding", "-Iknor/cknor/libkcommon",
             "-fopenmp"]
-    extra_compile_args.append("-I"+find_header_loc("numpy"))
+    # extra_compile_args.append("-I"+find_header_loc("numpy"))
     extra_compile_args.extend(["-DBIND", "-DUSE_NUMA"])
 
     extra_link_args=["-Lknor/cknor/libman", "-lman", "-Llknor/cknor/libauto",
@@ -86,7 +162,7 @@ elif OS == _OS_SUPPORTED_["mac"]:
             "-Wno-unused-function", "-I.","-Iknor/cknor/libman",
             "-Iknor/cknor/binding", "-Iknor/cknor/libkcommon"]
 
-    extra_compile_args.append("-I"+find_header_loc("numpy"))
+    # extra_compile_args.append("-I"+find_header_loc("numpy"))
 
     if PYTHON_VERSION == 2:
         extra_compile_args.append("-I/usr/include/python2.7")
@@ -103,12 +179,22 @@ else:
     raise RuntimeError("Unsupported OS {}".format(raw_os))
 
 # Build cython modules
-ext_modules = cythonize(Extension(
+ext_modules = [
+        Extension(
         "knor.knor",                                # the extension name
         sources=sources,
         language="c++",
+        include_dirs=[
+            # Path to pybind11 headers
+            get_pybind_include(),
+            get_pybind_include(user=True), # TODO include li
+            ".", "knor/cknor/libman",
+            "knor/cknor/binding", "knor/cknor/libkcommon"
+        ],
+
         extra_compile_args=extra_compile_args,
-        extra_link_args=extra_link_args))
+        extra_link_args=extra_link_args),
+]
 
 ################################################################################
 
@@ -120,7 +206,7 @@ class knor_clib(build_clib, object):
                 "knor/cknor/libman", "knor/cknor/libauto",
                 "knor/cknor/binding", "knor/cknor/libkcommon",
                 ]
-            self.include_dirs.append(find_header_loc("numpy"))
+            # self.include_dirs.append(find_header_loc("numpy"))
             self.define = [
                     ("BIND", None), ("USE_NUMA", None)
                     ]
@@ -129,7 +215,7 @@ class knor_clib(build_clib, object):
                 "knor/cknor/libman", "knor/cknor/binding",
                 "knor/cknor/libkcommon"
                 ]
-            self.include_dirs.append(find_header_loc("numpy"))
+            # self.include_dirs.append(find_header_loc("numpy"))
 
             self.define = [
                     ("BIND", None)
@@ -142,7 +228,7 @@ class knor_clib(build_clib, object):
         for (lib_name, build_info) in libraries:
             sources = build_info.get("sources")
             if sources is None or not isinstance(sources, (list, tuple)):
-                raise DistutilsSetupError(("in \"libraries\" option (library \"%s\"), " +
+                raise RuntimeError(("in \"libraries\" option (library \"%s\"), " +
                        "\"sources\" must be present and must be " +
                        "a list of source filenames") % lib_name)
             sources = list(sources)
@@ -180,25 +266,24 @@ class knor_clib(build_clib, object):
 # Run the setup
 setup(
     name="knor",
-    version="0.0.1",
+    version=__version__,
+    author="Disa Mhembere",
+    author_email="disa@jhu.edu",
     description="A fast parallel k-means library for Linux and Mac",
     long_description="The k-means NUMA Optimized Routine library or " +\
     "knor is a highly optimized and fast library for computing " +\
     "k-means in parallel with accelerations for Non-Uniform Memory " +\
     "Access (NUMA) architectures",
     url="https://github.com/flashxio/knor",
-    author="Disa Mhembere",
-    author_email="disa@jhu.edu",
     license="Apache License, Version 2.0",
     keywords="kmeans k-means parallel clustering machine-learning",
     install_requires=[
         "numpy",
-        "Cython>=0.26",
-        "cython>=0.26",
         ],
     package_dir = {"knor": "knor"},
     packages=["knor", "knor.Exceptions"],
     libraries =libraries,
-    cmdclass = {"build_clib": knor_clib, "build_ext": build_ext},
+    cmdclass = {"build_clib": knor_clib, "build_ext": BuildExt},
     ext_modules = ext_modules,
+    zip_safe=False,
     )

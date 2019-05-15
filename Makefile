@@ -30,7 +30,8 @@ py3:
 	python3 setup.py build
 
 install:
-	python setup.py install
+	#python setup.py install
+	python3 setup.py install
 
 dist:
 	python setup.py sdist
@@ -44,8 +45,8 @@ up-test:
 
 clean:
 	rm -rf build
-	rm -rf MANIFEST
+	rm -f MANIFEST
 	rm -rf dist
-	rm *.pyc
+	rm -f *.pyc
 	rm -rf __pycache__
 	rm -rf knor/__pycache__
