@@ -3,41 +3,75 @@
 #include <pybind11/operators.h>
 
 #include "cknor/libkcommon/kcommon.hpp"
-#include "cknor/libauto/kmeans.hpp"
-#include "cknor/libauto/kmeans.hpp"
-#include "knor/cknor/binding/knori.hpp"
+#include "cknor/binding/kmeanspp.hpp"
+#include "cknor/libman/kmeans_task_coordinator.hpp"
+//#include "cknor/libman/kmeans_coordinator.hpp"
+//#include "cknor/libman/skmeans_coordinator.hpp"
+//#include "cknor/libman/fcm_coordinator.hpp"
+//#include "cknor/libman/medoid_coordinator.hpp"
+//#include "cknor/libman/hclust_coordinator.hpp"
+//#include "cknor/libman/xmeans_coordinator.hpp"
+//#include "cknor/libman/gmeans_coordinator.hpp"
 
 namespace py = pybind11;
-namespace kbase = kpmeans::base;
+namespace kbase = knor::base;
+namespace kprune = knor::prune;
 
 class Kmeans {
     public:
-        kbase::kmeans_t fit(double* data, const size_t nrow,
+        kbase::cluster_t fit(double* data, const size_t nrow,
                 const size_t ncol, const unsigned k,
                 size_t max_iters=std::numeric_limits<size_t>::max(),
                 unsigned nnodes=kbase::get_num_nodes(),
                 unsigned nthread=kbase::get_num_omp_threads(),
                 double* p_centers=NULL, std::string init="kmeanspp",
-                double tolerance=-1, std::string dist_type="eucl",
-                bool omp=false, bool numa_opt=false) {
-            return kbase::kmeans(data, nrow, ncol, k, max_iters,
-                    nnodes, nthread, p_centers, init,
-                    tolerance, dist_type, omp, numa_opt);
+                double tolerance=-1, std::string dist_type="eucl") {
+
+            return kprune::kmeans_task_coordinator::create(
+                    "", nrow, ncol, k, max_iters, nnodes,
+                    nthread, p_centers, init, tolerance,
+                    dist_type)->run(&data[0]);
         }
 
-        kbase::kmeans_t fit(const std::string datafn, const size_t nrow,
+        kbase::cluster_t fit(const std::string datafn, const size_t nrow,
                 const size_t ncol, const unsigned k,
                 size_t max_iters=std::numeric_limits<size_t>::max(),
                 unsigned nnodes=kbase::get_num_nodes(),
                 unsigned nthread=kbase::get_num_omp_threads(),
                 double* p_centers=NULL, std::string init="kmeanspp",
-                double tolerance=-1, std::string dist_type="eucl",
-                bool omp=false) {
+                double tolerance=-1, std::string dist_type="eucl") {
 
-            return kbase::kmeans(datafn, nrow, ncol, k, max_iters, nnodes,
-                    nthread, p_centers, init, tolerance, dist_type, omp);
+            return kprune::kmeans_task_coordinator::create(
+                    datafn, nrow, ncol, k, max_iters, nnodes,
+                    nthread, p_centers, init, tolerance, dist_type)->run();
         }
 };
+
+class KmeansPP {
+    public:
+        kbase::pp_pair fit(
+                double* data, const size_t nrow,
+                const size_t ncol, const unsigned k,
+                const unsigned nstart=1,
+                unsigned nthread=kbase::get_num_omp_threads(),
+                std::string dist_type="eucl") {
+
+            return kbase::kmeansPP(data, nrow, ncol, k, nstart, nthread,
+                    dist_type);
+        }
+
+        kbase::pp_pair fit(
+                const std::string datafn, const size_t nrow,
+                const size_t ncol, const unsigned k,
+                const unsigned nstart=1,
+                unsigned nthread=kbase::get_num_omp_threads(),
+                std::string dist_type="eucl") {
+
+            return kbase::kmeansPP(datafn, nrow, ncol, k,
+                    nstart, nthread, dist_type);
+        }
+};
+
 
 PYBIND11_MODULE(knor, m) {
     m.doc() = R"pbdoc(
@@ -51,23 +85,36 @@ PYBIND11_MODULE(knor, m) {
 
     )pbdoc";
 
-    // GMap
-    py::class_<kbase::kmeans_t>(m, "kmeans_t")
-            .def(py::init(), "Create a kmeans_t return object")
-            .def("__repr__", &kbase::kmeans_t::to_str);
+    // Kmeans
+    py::class_<kbase::cluster_t>(m, "cluster_t")
+            .def(py::init(), "Create a cluster_t return object")
+            .def("__repr__", &kbase::cluster_t::to_str);
 
     py::class_<Kmeans>(m, "Kmeans")
             .def(py::init(), "Create a Kmeans object")
-            .def("fit", (kbase::kmeans_t (Kmeans::*)(double*, const size_t,
+            .def("fit", (kbase::cluster_t (Kmeans::*)(double*, const size_t,
                             const size_t, const unsigned, size_t, unsigned,
-                            unsigned, double*, std::string, double, std::string,
-                            bool, bool)) &Kmeans::fit,
+                            unsigned, double*, std::string, double, std::string
+                            )) &Kmeans::fit,
                     "Compute kmeans on the dataset provided")
-            .def("fit", (kbase::kmeans_t (Kmeans::*)(const std::string,
+            .def("fit", (kbase::cluster_t (Kmeans::*)(const std::string,
                             const size_t, const size_t, const unsigned,
                             size_t, unsigned, unsigned, double*, std::string,
-                            double, std::string, bool)) &Kmeans::fit,
+                            double, std::string)) &Kmeans::fit,
                     "Compute kmeans on the dataset provided");
+
+    // Kmeans++
+    py::class_<KmeansPP>(m, "KmeansPP")
+            .def(py::init(), "Create a KmeansPP object")
+            .def("fit", (kbase::pp_pair (KmeansPP::*)(double*, const size_t,
+                            const size_t, const unsigned, const unsigned,
+                            unsigned, std::string)) &KmeansPP::fit,
+                    "Compute kmeans++ on the dataset provided")
+            .def("fit", (kbase::pp_pair (KmeansPP::*)(
+                            const std::string, const size_t, const size_t,
+                            const unsigned, const unsigned,
+                unsigned nthread, std::string)) &KmeansPP::fit,
+                    "Compute kmeans++ on the dataset provided");
 
     // Versioning information
 #ifdef VERSION_INFO
