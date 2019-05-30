@@ -302,12 +302,18 @@ PYBIND11_MODULE(knor, m) {
                             const size_t,
                             const size_t, const unsigned, const unsigned,
                             unsigned, std::string)) &KmeansPP::fit,
-                    "Compute kmeans++ on the dataset provided")
+                    "Compute kmeans++ on the dataset provided",
+                    py::arg("data"), py::arg("nrow"), py::arg("ncol"),
+                    py::arg("k"), py::arg("nstart")=1, py::arg("nthread")=2,
+                    py::arg("dist_type")="eucl")
             .def("fit", (kbase::pp_pair (KmeansPP::*)(
                             const std::string, const size_t, const size_t,
                             const unsigned, const unsigned,
                 unsigned nthread, std::string)) &KmeansPP::fit,
-                    "Compute kmeans++ on the dataset provided");
+                    "Compute kmeans++ on the dataset provided",
+                    py::arg("datafn"), py::arg("nrow"), py::arg("ncol"),
+                    py::arg("k"), py::arg("nstart")=1, py::arg("nthread")=2,
+                    py::arg("dist_type")="eucl");
 
     // SKmeans
     py::class_<SKmeans>(m, "SKmeans")
@@ -317,12 +323,22 @@ PYBIND11_MODULE(knor, m) {
                             const size_t, const unsigned, size_t,
                             unsigned, std::vector<double>&, std::string,
                             double, std::string)) &SKmeans::fit,
-                    "Compute spherical kmeans on the dataset provided")
+                    "Compute spherical kmeans on the dataset provided",
+                    py::arg("data"), py::arg("nrow"), py::arg("ncol"),
+                    py::arg("k"), py::arg("max_iters")=20, py::arg("nthread")=2,
+                    py::arg("centers")=std::vector<double>(),
+                    py::arg("init")="kmeanspp", py::arg("tolerance")=-1,
+                    py::arg("dist_type")="cos")
             .def("fit", (kbase::cluster_t (SKmeans::*)(const std::string,
                             const size_t, const size_t, const unsigned,
                             size_t, unsigned, std::vector<double>&, std::string,
                             double, std::string)) &SKmeans::fit,
-                    "Compute spherical kmeans on the dataset provided");
+                    "Compute spherical kmeans on the dataset provided",
+                    py::arg("datafn"), py::arg("nrow"), py::arg("ncol"),
+                    py::arg("k"), py::arg("max_iters")=20, py::arg("nthread")=2,
+                    py::arg("centers")=std::vector<double>(),
+                    py::arg("init")="kmeanspp", py::arg("tolerance")=-1,
+                    py::arg("dist_type")="cos");
 
     // FuzzyCMeans
     py::class_<FuzzyCMeans>(m, "FuzzyCMeans")
