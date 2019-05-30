@@ -282,8 +282,8 @@ PYBIND11_MODULE(knor, m) {
                     py::arg("k"), py::arg("max_iters")=20, py::arg("nthread")=2,
                     py::arg("centers")=std::vector<double>(),
                     py::arg("init")="kmeanspp", py::arg("tolerance")=-1,
-                    py::arg("dist_type")="eucl")
-
+                    py::arg("dist_type")="eucl"
+                )
             .def("fit", (kbase::cluster_t (Kmeans::*)(const std::string,
                             const size_t, const size_t, const unsigned,
                             size_t, unsigned, std::vector<double>&, std::string,
@@ -293,7 +293,8 @@ PYBIND11_MODULE(knor, m) {
                     py::arg("k"), py::arg("max_iters")=20, py::arg("nthread")=2,
                     py::arg("centers")=std::vector<double>(),
                     py::arg("init")="kmeanspp", py::arg("tolerance")=-1,
-                    py::arg("dist_type")="eucl");
+                    py::arg("dist_type")="eucl"
+                );
 
     // Kmeans++
     py::class_<KmeansPP>(m, "KmeansPP")
@@ -305,7 +306,8 @@ PYBIND11_MODULE(knor, m) {
                     "Compute kmeans++ on the dataset provided",
                     py::arg("data"), py::arg("nrow"), py::arg("ncol"),
                     py::arg("k"), py::arg("nstart")=1, py::arg("nthread")=2,
-                    py::arg("dist_type")="eucl")
+                    py::arg("dist_type")="eucl"
+                )
             .def("fit", (kbase::pp_pair (KmeansPP::*)(
                             const std::string, const size_t, const size_t,
                             const unsigned, const unsigned,
@@ -313,7 +315,8 @@ PYBIND11_MODULE(knor, m) {
                     "Compute kmeans++ on the dataset provided",
                     py::arg("datafn"), py::arg("nrow"), py::arg("ncol"),
                     py::arg("k"), py::arg("nstart")=1, py::arg("nthread")=2,
-                    py::arg("dist_type")="eucl");
+                    py::arg("dist_type")="eucl"
+                );
 
     // SKmeans
     py::class_<SKmeans>(m, "SKmeans")
@@ -328,7 +331,8 @@ PYBIND11_MODULE(knor, m) {
                     py::arg("k"), py::arg("max_iters")=20, py::arg("nthread")=2,
                     py::arg("centers")=std::vector<double>(),
                     py::arg("init")="kmeanspp", py::arg("tolerance")=-1,
-                    py::arg("dist_type")="cos")
+                    py::arg("dist_type")="cos"
+                )
             .def("fit", (kbase::cluster_t (SKmeans::*)(const std::string,
                             const size_t, const size_t, const unsigned,
                             size_t, unsigned, std::vector<double>&, std::string,
@@ -338,7 +342,8 @@ PYBIND11_MODULE(knor, m) {
                     py::arg("k"), py::arg("max_iters")=20, py::arg("nthread")=2,
                     py::arg("centers")=std::vector<double>(),
                     py::arg("init")="kmeanspp", py::arg("tolerance")=-1,
-                    py::arg("dist_type")="cos");
+                    py::arg("dist_type")="cos"
+                );
 
     // FuzzyCMeans
     py::class_<FuzzyCMeans>(m, "FuzzyCMeans")
@@ -348,13 +353,25 @@ PYBIND11_MODULE(knor, m) {
                             const unsigned, const unsigned, std::vector<double>&,
                             const std::string, const double, const std::string,
                             const unsigned)) &FuzzyCMeans::fit,
-                    "Compute FuzzyCMeans on the dataset provided")
+                    "Compute FuzzyCMeans on the dataset provided",
+                    py::arg("data"), py::arg("nrow"), py::arg("ncol"),
+                    py::arg("k"), py::arg("max_iters")=20, py::arg("nthread")=2,
+                    py::arg("centers")=std::vector<double>(),
+                    py::arg("init")="forgy", py::arg("tolerance")=-1,
+                    py::arg("dist_type")="cos", py::arg("fuzzindex")=2
+                )
             .def("fit", (kbase::cluster_t (FuzzyCMeans::*)(
                             const std::string, const size_t, const size_t,
                             const unsigned, const unsigned, const unsigned,
                             std::vector<double>&, const std::string, const double,
                             const std::string, const unsigned)) &FuzzyCMeans::fit,
-                    "Compute FuzzyCMeans on the dataset provided");
+                    "Compute FuzzyCMeans on the dataset provided",
+                    py::arg("fn"), py::arg("nrow"), py::arg("ncol"),
+                    py::arg("k"), py::arg("max_iters")=20, py::arg("nthread")=2,
+                    py::arg("centers")=std::vector<double>(),
+                    py::arg("init")="forgy", py::arg("tolerance")=-1,
+                    py::arg("dist_type")="cos", py::arg("fuzzindex")=2
+                    );
 
     // Kmedoids
     py::class_<Kmedoids>(m, "Kmedoids")
@@ -366,7 +383,13 @@ PYBIND11_MODULE(knor, m) {
                             const std::string,
                             const double, const std::string,
                             const double)) &Kmedoids::fit,
-                    "Compute CLARA on the dataset provided")
+                    "Compute CLARA on the dataset provided",
+                    py::arg("data"), py::arg("nrow"), py::arg("ncol"),
+                    py::arg("k"), py::arg("max_iters")=20, py::arg("nthread")=2,
+                    py::arg("centers")=std::vector<double>(),
+                    py::arg("init")="random", py::arg("tolerance")=-1,
+                    py::arg("dist_type")="taxi", py::arg("sample_rate")=.2
+                )
             .def("fit", (kbase::cluster_t (Kmedoids::*)(
                             const std::string, const size_t,
                             const size_t, const unsigned, const unsigned,
@@ -374,7 +397,13 @@ PYBIND11_MODULE(knor, m) {
                             const std::string,
                             const double, const std::string,
                             const double)) &Kmedoids::fit,
-                    "Compute CLARA on the dataset provided");
+                    "Compute CLARA on the dataset provided",
+                    py::arg("fn"), py::arg("nrow"), py::arg("ncol"),
+                    py::arg("k"), py::arg("max_iters")=20, py::arg("nthread")=2,
+                    py::arg("centers")=std::vector<double>(),
+                    py::arg("init")="random", py::arg("tolerance")=-1,
+                    py::arg("dist_type")="taxi", py::arg("sample_rate")=.2
+                    );
 
     // Hmeans
     py::class_<Hmeans>(m, "Hmeans")
@@ -385,13 +414,25 @@ PYBIND11_MODULE(knor, m) {
                             std::vector<double>&, const std::string,
                             const double, const std::string,
                             const unsigned)) &Hmeans::fit,
-                    "Compute Hierarchical clustering means on the dataset")
+                    "Compute Hierarchical clustering means on the dataset",
+                    py::arg("data"), py::arg("nrow"), py::arg("ncol"),
+                    py::arg("k"), py::arg("max_iters")=20, py::arg("nthread")=2,
+                    py::arg("centers")=std::vector<double>(),
+                    py::arg("init")="kmeanspp", py::arg("tolerance")=-1,
+                    py::arg("dist_type")="eucl", py::arg("min_clust_size")=2
+                )
             .def("fit", (kbase::cluster_t (Hmeans::*)(const std::string,
                             const size_t, const size_t, const unsigned,
                             const unsigned, const unsigned, std::vector<double>&,
                             const std::string, const double, const std::string,
                             const unsigned)) &Hmeans::fit,
-                    "Compute Hierarchical clustering means on the dataset");
+                    "Compute Hierarchical clustering means on the dataset",
+                    py::arg("fn"), py::arg("nrow"), py::arg("ncol"),
+                    py::arg("k"), py::arg("max_iters")=20, py::arg("nthread")=2,
+                    py::arg("centers")=std::vector<double>(),
+                    py::arg("init")="kmeanspp", py::arg("tolerance")=-1,
+                    py::arg("dist_type")="eucl", py::arg("min_clust_size")=2
+                    );
 
     // Xmeans
     py::class_<Xmeans>(m, "Xmeans")
@@ -402,13 +443,25 @@ PYBIND11_MODULE(knor, m) {
                             const unsigned, std::vector<double>&,
                             const std::string, const double, const std::string,
                             const unsigned)) &Xmeans::fit,
-                    "Compute Xmeans on the dataset provided")
+                    "Compute Xmeans on the dataset provided",
+                    py::arg("data"), py::arg("nrow"), py::arg("ncol"),
+                    py::arg("k"), py::arg("max_iters")=20, py::arg("nthread")=2,
+                    py::arg("centers")=std::vector<double>(),
+                    py::arg("init")="kmeanspp", py::arg("tolerance")=-1,
+                    py::arg("dist_type")="eucl", py::arg("min_clust_size")=2
+                )
             .def("fit", (kbase::cluster_t (Xmeans::*)(const std::string,
                             const size_t, const size_t, const unsigned,
                             const unsigned, const unsigned, std::vector<double>&,
                             const std::string, const double, const std::string,
                             const unsigned)) &Xmeans::fit,
-                    "Compute Xmeans on the dataset provided");
+                    "Compute Xmeans on the dataset provided",
+                    py::arg("fn"), py::arg("nrow"), py::arg("ncol"),
+                    py::arg("k"), py::arg("max_iters")=20, py::arg("nthread")=2,
+                    py::arg("centers")=std::vector<double>(),
+                    py::arg("init")="kmeanspp", py::arg("tolerance")=-1,
+                    py::arg("dist_type")="eucl", py::arg("min_clust_size")=2
+                    );
 
     // Gmeans
     py::class_<Gmeans>(m, "Gmeans")
@@ -419,13 +472,27 @@ PYBIND11_MODULE(knor, m) {
                             std::vector<double>&, const std::string,
                             const double, const std::string,
                             const unsigned, const short)) &Gmeans::fit,
-                    "Compute Gmeans on the dataset provided")
+                    "Compute Gmeans on the dataset provided",
+                    py::arg("data"), py::arg("nrow"), py::arg("ncol"),
+                    py::arg("k"), py::arg("max_iters")=20, py::arg("nthread")=2,
+                    py::arg("centers")=std::vector<double>(),
+                    py::arg("init")="kmeanspp", py::arg("tolerance")=-1,
+                    py::arg("dist_type")="eucl", py::arg("min_clust_size")=2,
+                    py::arg("strictness")=4
+                )
             .def("fit", (kbase::cluster_t (Gmeans::*)(const std::string,
                             const size_t, const size_t, const unsigned,
                             const unsigned, const unsigned, std::vector<double>&,
                             const std::string, const double, const std::string,
                             const unsigned, const short)) &Gmeans::fit,
-                    "Compute Gmeans on the dataset provided");
+                    "Compute Gmeans on the dataset provided",
+                    py::arg("fn"), py::arg("nrow"), py::arg("ncol"),
+                    py::arg("k"), py::arg("max_iters")=20, py::arg("nthread")=2,
+                    py::arg("centers")=std::vector<double>(),
+                    py::arg("init")="kmeanspp", py::arg("tolerance")=-1,
+                    py::arg("dist_type")="eucl", py::arg("min_clust_size")=2,
+                    py::arg("strictness")=4
+                );
 
     // Versioning information
 #ifdef VERSION_INFO
