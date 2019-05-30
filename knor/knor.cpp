@@ -7,8 +7,8 @@
 #include "cknor/libman/kmeans_task_coordinator.hpp"
 #include "cknor/libman/skmeans_coordinator.hpp"
 #include "cknor/libman/fcm_coordinator.hpp"
-//#include "cknor/libman/medoid_coordinator.hpp"
-//#include "cknor/libman/hclust_coordinator.hpp"
+#include "cknor/libman/medoid_coordinator.hpp"
+#include "cknor/libman/hclust_coordinator.hpp"
 //#include "cknor/libman/xmeans_coordinator.hpp"
 //#include "cknor/libman/gmeans_coordinator.hpp"
 
@@ -131,6 +131,95 @@ class FuzzyCMeans {
         }
 };
 
+class Kmedoids {
+    public:
+        inline kbase::cluster_t fit(double* data, const size_t nrow,
+                const size_t ncol, const unsigned k, const unsigned max_iters,
+                const unsigned nthread,
+                const double* p_centers=NULL, const std::string init="random",
+                const double tolerance=-1, const std::string dist_type="taxi",
+                const double sample_rate=.2) {
+
+                return knor::medoid_coordinator::create("",
+                        nrow, ncol, k, max_iters,
+                        kbase::get_num_nodes(), nthread, p_centers,
+                        init, tolerance, dist_type, sample_rate)->run(&data[0]);
+        }
+
+        inline kbase::cluster_t fit(const std::string fn, const size_t nrow,
+                const size_t ncol, const unsigned k, const unsigned max_iters,
+                const unsigned nthread,
+                const double* p_centers=NULL, const std::string init="random",
+                const double tolerance=-1, const std::string dist_type="taxi",
+                const double sample_rate=.2) {
+
+            auto coord =
+                knor::medoid_coordinator::create("",
+                        nrow, ncol, k, max_iters, kbase::get_num_nodes(),
+                        nthread, p_centers, init, tolerance, dist_type,
+                        sample_rate);
+
+            std::vector<double> data(nrow*ncol);
+            kbase::bin_io<double> br(fn, nrow, ncol);
+            br.read(&data);
+            return coord->run(&data[0]);
+            // TODO: if (p_centers) delete [] p_centers;
+            // TODO: delete data
+        }
+};
+
+class Hmeans {
+    public:
+        kbase::cluster_t fit(double* data,
+                const size_t nrow,
+                const size_t ncol, const unsigned kmax, const unsigned max_iters,
+                const unsigned nthread,
+                const double* centers=NULL, const std::string init="kmeanspp",
+                const double tolerance=-1, const std::string dist_type="eucl",
+                const unsigned min_clust_size=2) {
+
+        return knor::hclust_coordinator::create("", nrow, ncol, kmax,
+                max_iters, kbase::get_num_nodes(), nthread, centers,
+                init, tolerance, dist_type, min_clust_size)->run(&data[0]);
+        }
+
+        kbase::cluster_t fit(const std::string fn,
+                const size_t nrow,
+                const size_t ncol, const unsigned kmax, const unsigned max_iters,
+                const unsigned nthread,
+                const double* centers=NULL, const std::string init="kmeanspp",
+                const double tolerance=-1, const std::string dist_type="eucl",
+                const unsigned min_clust_size=2) {
+
+        return knor::hclust_coordinator::create(fn, nrow, ncol, kmax,
+                max_iters, kbase::get_num_nodes(), nthread, centers,
+                init, tolerance, dist_type, min_clust_size)->run();
+        }
+};
+
+#if 0
+class  {
+    public:
+        kbase::cluster_t fit() {
+
+        }
+
+        kbase::cluster_t fit() {
+
+        }
+};
+
+class  {
+    public:
+        kbase::cluster_t fit() {
+
+        }
+
+        kbase::cluster_t fit() {
+
+        }
+};
+#endif
 
 PYBIND11_MODULE(knor, m) {
     m.doc() = R"pbdoc(
@@ -177,33 +266,93 @@ PYBIND11_MODULE(knor, m) {
 
     // SKmeans
     py::class_<SKmeans>(m, "SKmeans")
-            .def(py::init(), "Create a Kmeans object")
+            .def(py::init(), "Create a Spherical Kmeans object")
             .def("fit", (kbase::cluster_t (SKmeans::*)(double*, const size_t,
                             const size_t, const unsigned, size_t, unsigned,
                             unsigned, double*, std::string, double, std::string
                             )) &SKmeans::fit,
-                    "Compute kmeans on the dataset provided")
+                    "Compute spherical kmeans on the dataset provided")
             .def("fit", (kbase::cluster_t (SKmeans::*)(const std::string,
                             const size_t, const size_t, const unsigned,
                             size_t, unsigned, unsigned, double*, std::string,
                             double, std::string)) &SKmeans::fit,
-                    "Compute kmeans on the dataset provided");
+                    "Compute spherical kmeans on the dataset provided");
 
     // FuzzyCMeans
     py::class_<FuzzyCMeans>(m, "FuzzyCMeans")
-            .def(py::init(), "Create a Kmeans object")
+            .def(py::init(), "Create a FuzzyCMeans object")
             .def("fit", (kbase::cluster_t (FuzzyCMeans::*)(double*,
                             const size_t, const size_t, const unsigned,
                             const unsigned, const unsigned, const double*,
                             const std::string, const double, const std::string,
                             const unsigned)) &FuzzyCMeans::fit,
-                    "Compute kmeans on the dataset provided")
+                    "Compute FuzzyCMeans on the dataset provided")
             .def("fit", (kbase::cluster_t (FuzzyCMeans::*)(
                             const std::string, const size_t, const size_t,
                             const unsigned, const unsigned, const unsigned,
                             const double*, const std::string, const double,
                             const std::string, const unsigned)) &FuzzyCMeans::fit,
-                    "Compute kmeans on the dataset provided");
+                    "Compute FuzzyCMeans on the dataset provided");
+
+    // Kmedoids
+    py::class_<Kmedoids>(m, "Kmedoids")
+            .def(py::init(), "Create a CLARA object")
+            .def("fit", (kbase::cluster_t (Kmedoids::*)(double*,
+                const size_t, const size_t, const unsigned, const unsigned,
+                const unsigned, const double*, const std::string,
+                const double, const std::string,
+                const double)) &Kmedoids::fit,
+                    "Compute CLARA on the dataset provided")
+            .def("fit", (kbase::cluster_t (Kmedoids::*)(
+                            const std::string, const size_t,
+                            const size_t, const unsigned, const unsigned,
+                            const unsigned, const double*, const std::string,
+                            const double, const std::string,
+                            const double)) &Kmedoids::fit,
+                    "Compute CLARA on the dataset provided");
+
+    // Hmeans
+    py::class_<Hmeans>(m, "Hmeans")
+            .def(py::init(), "Create a Hierarchical clustering means object")
+            .def("fit", (kbase::cluster_t (Hmeans::*)(double*, const size_t,
+                const size_t, const unsigned, const unsigned,
+                const unsigned, const double*, const std::string,
+                const double, const std::string, const unsigned)) &Hmeans::fit,
+                    "Compute Hierarchical clustering means on the dataset")
+            .def("fit", (kbase::cluster_t (Hmeans::*)(const std::string,
+                            const size_t, const size_t, const unsigned,
+                            const unsigned, const unsigned, const double*,
+                            const std::string, const double, const std::string,
+                            const unsigned)) &Hmeans::fit,
+                    "Compute Hierarchical clustering means on the dataset");
+
+#if 0
+    //
+    py::class_<>(m, "")
+            .def(py::init(), "Create a ... object")
+            .def("fit", (kbase::cluster_t (::*)( )) &::fit,
+                    "Compute ... on the dataset provided")
+            .def("fit", (kbase::cluster_t (::*)(
+                            )) &::fit,
+                    "Compute ... on the dataset provided");
+
+    //
+    py::class_<>(m, "")
+            .def(py::init(), "Create a ... object")
+            .def("fit", (kbase::cluster_t (::*)( )) &::fit,
+                    "Compute ... on the dataset provided")
+            .def("fit", (kbase::cluster_t (::*)(
+                            )) &::fit,
+                    "Compute ... on the dataset provided");
+    //
+    py::class_<>(m, "")
+            .def(py::init(), "Create a ... object")
+            .def("fit", (kbase::cluster_t (::*)( )) &::fit,
+                    "Compute ... on the dataset provided")
+            .def("fit", (kbase::cluster_t (::*)(
+                            )) &::fit,
+                    "Compute ... on the dataset provided");
+#endif
 
     // Versioning information
 #ifdef VERSION_INFO
