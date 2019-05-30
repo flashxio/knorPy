@@ -9,8 +9,8 @@
 #include "cknor/libman/fcm_coordinator.hpp"
 #include "cknor/libman/medoid_coordinator.hpp"
 #include "cknor/libman/hclust_coordinator.hpp"
-//#include "cknor/libman/xmeans_coordinator.hpp"
-//#include "cknor/libman/gmeans_coordinator.hpp"
+#include "cknor/libman/xmeans_coordinator.hpp"
+#include "cknor/libman/gmeans_coordinator.hpp"
 
 namespace py = pybind11;
 namespace kbase = knor::base;
@@ -197,29 +197,65 @@ class Hmeans {
         }
 };
 
-#if 0
-class  {
+class  Xmeans {
     public:
-        kbase::cluster_t fit() {
+        kbase::cluster_t fit(double* data, const size_t nrow,
+                const size_t ncol, const unsigned kmax, const unsigned max_iters,
+                const unsigned nthread,
+                const double* centers=NULL, const std::string init="kmeanspp",
+                const double tolerance=-1, const std::string dist_type="eucl",
+                const unsigned min_clust_size=2) {
+
+        return knor::xmeans_coordinator::create("", nrow, ncol, kmax,
+                max_iters, kbase::get_num_nodes(),
+                nthread, centers, init, tolerance, dist_type,
+                min_clust_size)->run(&data[0]);
 
         }
 
-        kbase::cluster_t fit() {
+        kbase::cluster_t fit(const std::string fn, const size_t nrow,
+                const size_t ncol, const unsigned kmax, const unsigned max_iters,
+                const unsigned nthread,
+                const double* centers=NULL, const std::string init="kmeanspp",
+                const double tolerance=-1, const std::string dist_type="eucl",
+                const unsigned min_clust_size=2) {
 
+        return knor::xmeans_coordinator::create(fn, nrow, ncol, kmax,
+                max_iters, kbase::get_num_nodes(),
+                nthread, centers, init, tolerance, dist_type,
+                min_clust_size)->run();
         }
 };
 
-class  {
+class  Gmeans {
     public:
-        kbase::cluster_t fit() {
+        kbase::cluster_t fit(double* data, const size_t nrow,
+                const size_t ncol, const unsigned kmax, const unsigned max_iters,
+                const unsigned nthread,
+                const double* centers=NULL, const std::string init="kmeanspp",
+                const double tolerance=-1, const std::string dist_type="eucl",
+                const unsigned min_clust_size=2, const short strictness=4) {
+
+        return knor::gmeans_coordinator::create("", nrow, ncol, kmax,
+                max_iters, kbase::get_num_nodes(),
+                nthread, centers, init, tolerance, dist_type,
+                min_clust_size, strictness)->run(&data[0]);
 
         }
 
-        kbase::cluster_t fit() {
+        kbase::cluster_t fit(const std::string fn, const size_t nrow,
+                const size_t ncol, const unsigned kmax, const unsigned max_iters,
+                const unsigned nthread,
+                const double* centers=NULL, const std::string init="kmeanspp",
+                const double tolerance=-1, const std::string dist_type="eucl",
+                const unsigned min_clust_size=2, const short strictness=4) {
 
+        return knor::gmeans_coordinator::create(fn, nrow, ncol, kmax,
+                max_iters, kbase::get_num_nodes(),
+                nthread, centers, init, tolerance, dist_type,
+                min_clust_size, strictness)->run();
         }
 };
-#endif
 
 PYBIND11_MODULE(knor, m) {
     m.doc() = R"pbdoc(
@@ -326,33 +362,37 @@ PYBIND11_MODULE(knor, m) {
                             const unsigned)) &Hmeans::fit,
                     "Compute Hierarchical clustering means on the dataset");
 
-#if 0
-    //
-    py::class_<>(m, "")
-            .def(py::init(), "Create a ... object")
-            .def("fit", (kbase::cluster_t (::*)( )) &::fit,
-                    "Compute ... on the dataset provided")
-            .def("fit", (kbase::cluster_t (::*)(
-                            )) &::fit,
-                    "Compute ... on the dataset provided");
+    // Xmeans
+    py::class_<Xmeans>(m, "Xmeans")
+            .def(py::init(), "Create an Xmeans clustering object")
+            .def("fit", (kbase::cluster_t (Xmeans::*)(double*,const size_t,
+                const size_t, const unsigned, const unsigned,
+                const unsigned, const double*, const std::string,
+                const double, const std::string,
+                const unsigned)) &Xmeans::fit,
+                    "Compute Xmeans on the dataset provided")
+            .def("fit", (kbase::cluster_t (Xmeans::*)(const std::string,
+                            const size_t, const size_t, const unsigned,
+                            const unsigned, const unsigned, const double*,
+                            const std::string, const double, const std::string,
+                            const unsigned)) &Xmeans::fit,
+                    "Compute Xmeans on the dataset provided");
 
-    //
-    py::class_<>(m, "")
-            .def(py::init(), "Create a ... object")
-            .def("fit", (kbase::cluster_t (::*)( )) &::fit,
-                    "Compute ... on the dataset provided")
-            .def("fit", (kbase::cluster_t (::*)(
-                            )) &::fit,
-                    "Compute ... on the dataset provided");
-    //
-    py::class_<>(m, "")
-            .def(py::init(), "Create a ... object")
-            .def("fit", (kbase::cluster_t (::*)( )) &::fit,
-                    "Compute ... on the dataset provided")
-            .def("fit", (kbase::cluster_t (::*)(
-                            )) &::fit,
-                    "Compute ... on the dataset provided");
-#endif
+    // Gmeans
+    py::class_<Gmeans>(m, "Gmeans")
+            .def(py::init(), "Create an Gmeans clustering object")
+            .def("fit", (kbase::cluster_t (Gmeans::*)(double*,const size_t,
+                const size_t, const unsigned, const unsigned,
+                const unsigned, const double*, const std::string,
+                const double, const std::string,
+                const unsigned, const short)) &Gmeans::fit,
+                    "Compute Gmeans on the dataset provided")
+            .def("fit", (kbase::cluster_t (Gmeans::*)(const std::string,
+                            const size_t, const size_t, const unsigned,
+                            const unsigned, const unsigned, const double*,
+                            const std::string, const double, const std::string,
+                            const unsigned, const short)) &Gmeans::fit,
+                    "Compute Gmeans on the dataset provided");
 
     // Versioning information
 #ifdef VERSION_INFO
