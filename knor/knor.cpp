@@ -17,13 +17,14 @@ namespace kbase = knor::base;
 namespace kprune = knor::prune;
 
 class Kmeans {
-    unsigned k;
-    size_t max_iters;
-    unsigned nthread;
-    std::vector<double> centers;
-    std::string init;
-    double tolerance;
-    std::string dist_type;
+    private:
+        unsigned k;
+        size_t max_iters;
+        unsigned nthread;
+        std::vector<double> centers;
+        std::string init;
+        double tolerance;
+        std::string dist_type;
 
     public:
         Kmeans(const unsigned k, size_t max_iters, unsigned nthread,
@@ -34,7 +35,7 @@ class Kmeans {
 
         }
 
-        kbase::cluster_t fit(std::vector<double>& data, const size_t nrow,
+        inline kbase::cluster_t fit(std::vector<double>& data, const size_t nrow,
                 const size_t ncol) {
 
             return kprune::kmeans_task_coordinator::create(
@@ -43,7 +44,7 @@ class Kmeans {
                     tolerance, dist_type)->run(&data[0]);
         }
 
-        kbase::cluster_t fit(const std::string& datafn, const size_t nrow,
+        inline kbase::cluster_t fit(const std::string& datafn, const size_t nrow,
                 const size_t ncol) {
 
             return kprune::kmeans_task_coordinator::create(
@@ -54,24 +55,27 @@ class Kmeans {
 };
 
 class KmeansPP {
+    private:
+        unsigned k;
+        unsigned nstart;
+        unsigned nthread;
+        std::string dist_type;
+
     public:
-        kbase::pp_pair fit(
-                std::vector<double>& data, const size_t nrow,
-                const size_t ncol, const unsigned k,
-                const unsigned nstart,
-                unsigned nthread,
-                std::string dist_type) {
+        KmeansPP(const unsigned k, const unsigned nstart,
+                unsigned nthread, std::string& dist_type) :
+            k(k), nstart(nstart), nthread(nthread), dist_type(dist_type) {
+        }
+
+        inline kbase::pp_pair fit(std::vector<double>& data, const size_t nrow,
+                const size_t ncol) {
 
             return kbase::kmeansPP(&data[0], nrow, ncol, k, nstart, nthread,
                     dist_type);
         }
 
-        kbase::pp_pair fit(
-                const std::string datafn, const size_t nrow,
-                const size_t ncol, const unsigned k,
-                const unsigned nstart,
-                unsigned nthread,
-                std::string dist_type) {
+        inline kbase::pp_pair fit(const std::string& datafn, const size_t nrow,
+                const size_t ncol) {
 
             return kbase::kmeansPP(datafn, nrow, ncol, k,
                     nstart, nthread, dist_type);
@@ -93,7 +97,7 @@ class SKmeans {
                     tolerance, dist_type)->run(&data[0]);
         }
 
-        kbase::cluster_t fit(const std::string datafn, const size_t nrow,
+        inline kbase::cluster_t fit(const std::string datafn, const size_t nrow,
                 const size_t ncol, const unsigned k,
                 size_t max_iters,
                 unsigned nthread,
@@ -359,12 +363,9 @@ PYBIND11_MODULE(knor, m) {
 
     // Kmeans++
     py::class_<KmeansPP>(m, "KmeansPP")
-            .def(py::init(), "Create a KmeansPP object")
-            .def("fit", (kbase::pp_pair (KmeansPP::*)(std::vector<double>&,
-                            const size_t,
-                            const size_t, const unsigned, const unsigned,
-                            unsigned, std::string)) &KmeansPP::fit,
-    R"pbdoc(
+            .def(py::init<const unsigned, const unsigned,
+                    unsigned, std::string&>(),
+                    R"pbdoc(
     K-means++ provides *k* disjoint sets for a dataset using a
     parallel and scalable implementation of the algorithm described
     in Ostrovsky, Rafail, et al. "The effectiveness of Lloyd-type
@@ -372,43 +373,51 @@ PYBIND11_MODULE(knor, m) {
 
     Positional arguments:
     ---------------------
-    datafn:
-        - The filename of the data file in raw binary row major.
-    nrow:
-        - The number of samples in the dataset
-    ncol:
-        - The number of features in the dataset
     k:
         - The maximum number of iteration of k-means to perform
 
     Optional arguments:
     -------------------
-    max_iters:
-        - Maximum number of iterations to perform
+    nstart:
+        -  The number of iterations of kmeans++ to run
     nthread:
         - The number of parallel threads to run
-    centers:
-        - Initialized centroids
-    init:
-        -  The type of initialization to use "kmeanspp",
-        "random" or "forgy"
-    tolerance:
-        - The convergence tolerance
     dist_type: What dissimilarity metric to use: "eucl", "cos",
         "taxi", "sqeucl"
        )pbdoc",
-                    py::arg("data"), py::arg("nrow"), py::arg("ncol"),
-                    py::arg("k"), py::arg("nstart")=1, py::arg("nthread")=2,
-                    py::arg("dist_type")="eucl"
+            py::arg("k"), py::arg("nstart")=1, py::arg("nthread")=2,
+            py::arg("dist_type")="eucl")
+            .def("fit", (kbase::pp_pair (KmeansPP::*)(std::vector<double>&,
+                            const size_t, const size_t)) &KmeansPP::fit,
+    R"pbdoc(
+    Run the K-means++ algorithm
+
+    Positional arguments:
+    ---------------------
+    data:
+        - List or numpy.ndarray
+    nrow:
+        - The number of samples in the dataset
+    ncol:
+        - The number of features in the dataset
+       )pbdoc",
+            py::arg("data"), py::arg("nrow"), py::arg("ncol")
                 )
             .def("fit", (kbase::pp_pair (KmeansPP::*)(
-                            const std::string, const size_t, const size_t,
-                            const unsigned, const unsigned,
-                unsigned nthread, std::string)) &KmeansPP::fit,
-                    "Compute kmeans++ on the dataset provided",
-                    py::arg("datafn"), py::arg("nrow"), py::arg("ncol"),
-                    py::arg("k"), py::arg("nstart")=1, py::arg("nthread")=2,
-                    py::arg("dist_type")="eucl"
+                    const std::string&, const size_t, const size_t)) &KmeansPP::fit,
+    R"pbdoc(
+    Run the K-means++ algorithm
+
+    Positional arguments:
+    ---------------------
+    datafn:
+        - File name of data in raw row-major binary format
+    nrow:
+        - The number of samples in the dataset
+    ncol:
+        - The number of features in the dataset
+       )pbdoc",
+                    py::arg("datafn"), py::arg("nrow"), py::arg("ncol")
                 );
 
     // SKmeans
