@@ -263,6 +263,15 @@ PYBIND11_MODULE(knor, m) {
         .. autosummary::
            :toctree: _generate
 
+           cluster_t
+           Kmeans
+           KmeansPP
+           SKmeans
+           FuzzyCMeans
+           Kmedoids
+           Hmeans
+           Xmeans
+           Gmeans
     )pbdoc";
 
     // Kmeans
@@ -277,7 +286,39 @@ PYBIND11_MODULE(knor, m) {
                             const size_t, const unsigned, size_t,
                             unsigned, std::vector<double>&, std::string,
                             double, std::string)) &Kmeans::fit,
-                    "Compute kmeans on the dataset provided",
+    R"pbdoc(
+    K-means provides *k* disjoint sets for a dataset using a
+    parallel and fast NUMA optimized version of Lloyd's algorithm.
+    The details of which are found in this paper
+    https://arxiv.org/pdf/1606.08905.pdf.
+
+    Positional arguments:
+    ---------------------
+    data:
+        - List or numpy.ndarray
+    nrow:
+        - The number of samples in the dataset
+    ncol:
+        - The number of features in the dataset
+    k:
+        - The maximum number of iteration of k-means to perform
+
+    Optional arguments:
+    -------------------
+    max_iters:
+        - Maximum number of iterations to perform
+    nthread:
+        - The number of parallel threads to run
+    centers:
+        - Initialized centroids
+    init:
+        -  The type of initialization to use "kmeanspp",
+        "random" or "forgy"
+    tolerance:
+        - The convergence tolerance
+    dist_type: What dissimilarity metric to use: "eucl", "cos",
+        "taxi", "sqeucl"
+       )pbdoc",
                     py::arg("data"), py::arg("nrow"), py::arg("ncol"),
                     py::arg("k"), py::arg("max_iters")=20, py::arg("nthread")=2,
                     py::arg("centers")=std::vector<double>(),
@@ -288,7 +329,6 @@ PYBIND11_MODULE(knor, m) {
                             const size_t, const size_t, const unsigned,
                             size_t, unsigned, std::vector<double>&, std::string,
                             double, std::string)) &Kmeans::fit,
-                    "Compute kmeans on the dataset provided",
                     py::arg("datafn"), py::arg("nrow"), py::arg("ncol"),
                     py::arg("k"), py::arg("max_iters")=20, py::arg("nthread")=2,
                     py::arg("centers")=std::vector<double>(),
@@ -303,7 +343,39 @@ PYBIND11_MODULE(knor, m) {
                             const size_t,
                             const size_t, const unsigned, const unsigned,
                             unsigned, std::string)) &KmeansPP::fit,
-                    "Compute kmeans++ on the dataset provided",
+    R"pbdoc(
+    K-means++ provides *k* disjoint sets for a dataset using a
+    parallel and scalable implementation of the algorithm described
+    in Ostrovsky, Rafail, et al. "The effectiveness of Lloyd-type
+    methods for the k-means problem." Journal of the ACM (JACM) 59.6 (2012): 28.
+
+    Positional arguments:
+    ---------------------
+    datafn:
+        - The filename of the data file in raw binary row major.
+    nrow:
+        - The number of samples in the dataset
+    ncol:
+        - The number of features in the dataset
+    k:
+        - The maximum number of iteration of k-means to perform
+
+    Optional arguments:
+    -------------------
+    max_iters:
+        - Maximum number of iterations to perform
+    nthread:
+        - The number of parallel threads to run
+    centers:
+        - Initialized centroids
+    init:
+        -  The type of initialization to use "kmeanspp",
+        "random" or "forgy"
+    tolerance:
+        - The convergence tolerance
+    dist_type: What dissimilarity metric to use: "eucl", "cos",
+        "taxi", "sqeucl"
+       )pbdoc",
                     py::arg("data"), py::arg("nrow"), py::arg("ncol"),
                     py::arg("k"), py::arg("nstart")=1, py::arg("nthread")=2,
                     py::arg("dist_type")="eucl"
