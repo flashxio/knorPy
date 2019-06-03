@@ -18,7 +18,7 @@ namespace kprune = knor::prune;
 
 class Kmeans {
     private:
-        unsigned k;
+        const unsigned k;
         size_t max_iters;
         unsigned nthread;
         std::vector<double> centers;
@@ -56,8 +56,8 @@ class Kmeans {
 
 class KmeansPP {
     private:
-        unsigned k;
-        unsigned nstart;
+        const unsigned k;
+        const unsigned nstart;
         unsigned nthread;
         std::string dist_type;
 
@@ -84,7 +84,7 @@ class KmeansPP {
 
 class SKmeans {
     private:
-        unsigned k;
+        const unsigned k;
         size_t max_iters;
         unsigned nthread;
         std::vector<double> centers;
@@ -108,7 +108,7 @@ class SKmeans {
                     tolerance, "cos")->run(&data[0]);
         }
 
-        inline kbase::cluster_t fit(const std::string datafn, const size_t nrow,
+        inline kbase::cluster_t fit(const std::string& datafn, const size_t nrow,
                 const size_t ncol) {
 
             return knor::skmeans_coordinator::create(
@@ -119,13 +119,29 @@ class SKmeans {
 };
 
 class FuzzyCMeans {
-    public:
-        inline kbase::cluster_t fit(std::vector<double>& data, const size_t nrow,
-                const size_t ncol, const unsigned k, const unsigned max_iters,
-                const unsigned nthread, std::vector<double>& centers,
-                const std::string init, const double tolerance,
-                const std::string dist_type, const unsigned fuzzindex) {
+    private:
+        const unsigned k;
+        const size_t max_iters;
+        const unsigned nthread;
+        std::vector<double> centers;
+        std::string init;
+        const double tolerance;
+        const std::string dist_type;
+        const unsigned fuzzindex;
 
+    public:
+        FuzzyCMeans(const unsigned k, const unsigned max_iters,
+                const unsigned nthread, std::vector<double>& centers,
+                const std::string& init, const double tolerance,
+                const std::string& dist_type, const unsigned fuzzindex) :
+            k(k), max_iters(max_iters), nthread(nthread), centers(centers),
+            init(init), tolerance(tolerance), dist_type(dist_type),
+            fuzzindex(fuzzindex) {
+
+            }
+
+        inline kbase::cluster_t fit(std::vector<double>& data,
+                const size_t nrow, const size_t ncol) {
 
             return knor::fcm_coordinator::create(
                     "", nrow, ncol, k, max_iters, kbase::get_num_nodes(),
@@ -133,26 +149,39 @@ class FuzzyCMeans {
                     tolerance, dist_type, fuzzindex)->run(&data[0]);
         }
 
-        inline kbase::cluster_t fit(const std::string fn, const size_t nrow,
-                const size_t ncol, const unsigned k, const unsigned max_iters,
-                const unsigned nthread, std::vector<double>& centers,
-                const std::string init, const double tolerance,
-                const std::string dist_type, const unsigned fuzzindex) {
+        inline kbase::cluster_t fit(const std::string& datafn, const size_t nrow,
+                const size_t ncol) {
 
             return knor::fcm_coordinator::create(
-                    fn, nrow, ncol, k, max_iters, kbase::get_num_nodes(),
+                    datafn, nrow, ncol, k, max_iters, kbase::get_num_nodes(),
                     nthread, (centers.size() ? &centers[0]:NULL),
                     init, tolerance, dist_type, fuzzindex)->run();
         }
 };
 
 class Kmedoids {
+    private:
+        const unsigned k;
+        const size_t max_iters;
+        const unsigned nthread;
+        std::vector<double> centers;
+        const std::string init;
+        const double tolerance;
+        const std::string dist_type;
+        const unsigned sample_rate;
+
     public:
-        inline kbase::cluster_t fit(std::vector<double>& data, const size_t nrow,
-                const size_t ncol, const unsigned k, const unsigned max_iters,
+        Kmedoids(const unsigned k, const unsigned max_iters,
                 const unsigned nthread, std::vector<double>& centers,
-                const std::string init, const double tolerance,
-                const std::string dist_type, const double sample_rate) {
+                const std::string& init, const double tolerance,
+                const std::string& dist_type, const double sample_rate):
+            k(k), max_iters(max_iters), nthread(nthread), centers(centers),
+            init(init), tolerance(tolerance), dist_type(dist_type),
+            sample_rate(sample_rate) {
+        }
+
+        inline kbase::cluster_t fit(std::vector<double>& data, const size_t nrow,
+                const size_t ncol) {
 
                 return knor::medoid_coordinator::create("",
                         nrow, ncol, k, max_iters,
@@ -161,11 +190,8 @@ class Kmedoids {
                         init, tolerance, dist_type, sample_rate)->run(&data[0]);
         }
 
-        inline kbase::cluster_t fit(const std::string fn, const size_t nrow,
-                const size_t ncol, const unsigned k, const unsigned max_iters,
-                const unsigned nthread, std::vector<double>& centers,
-                const std::string init, const double tolerance,
-                const std::string dist_type, const double sample_rate) {
+        inline kbase::cluster_t fit(const std::string& datafn, const size_t nrow,
+                const size_t ncol) {
 
             auto coord =
                 knor::medoid_coordinator::create("",
@@ -174,7 +200,7 @@ class Kmedoids {
                         init, tolerance, dist_type, sample_rate);
 
             std::vector<double> data(nrow*ncol);
-            kbase::bin_io<double> br(fn, nrow, ncol);
+            kbase::bin_io<double> br(datafn, nrow, ncol);
             br.read(&data);
             return coord->run(&data[0]);
             // TODO: if (centers) delete [] centers;
@@ -183,14 +209,29 @@ class Kmedoids {
 };
 
 class Hmeans {
+    private:
+        const unsigned kmax;
+        const size_t max_iters;
+        const unsigned nthread;
+        std::vector<double> centers;
+        const std::string init;
+        const double tolerance;
+        const std::string dist_type;
+        const unsigned min_clust_size;
+
     public:
-        inline kbase::cluster_t fit(std::vector<double>& data,
-                const size_t nrow, const size_t ncol,
-                const unsigned kmax, const unsigned max_iters,
+        Hmeans(const unsigned kmax, const unsigned max_iters,
                 const unsigned nthread,
-                std::vector<double>& centers, const std::string init,
-                const double tolerance, const std::string dist_type,
-                const unsigned min_clust_size) {
+                std::vector<double>& centers, const std::string& init,
+                const double tolerance, const std::string& dist_type,
+                const unsigned min_clust_size) :
+            kmax(kmax), max_iters(max_iters), nthread(nthread), centers(centers),
+            init(init), tolerance(tolerance), dist_type(dist_type),
+            min_clust_size(min_clust_size)  {
+        }
+
+        inline kbase::cluster_t fit(std::vector<double>& data,
+                const size_t nrow, const size_t ncol) {
 
         return knor::hclust_coordinator::create("", nrow, ncol, kmax,
                 max_iters, kbase::get_num_nodes(), nthread,
@@ -198,14 +239,10 @@ class Hmeans {
                 init, tolerance, dist_type, min_clust_size)->run(&data[0]);
         }
 
-        inline kbase::cluster_t fit(const std::string fn,
-                const size_t nrow,
-                const size_t ncol, const unsigned kmax, const unsigned max_iters,
-                const unsigned nthread, std::vector<double>& centers,
-                const std::string init, const double tolerance,
-                const std::string dist_type, const unsigned min_clust_size) {
+        inline kbase::cluster_t fit(const std::string& datafn,
+                const size_t nrow, const size_t ncol) {
 
-        return knor::hclust_coordinator::create(fn, nrow, ncol, kmax,
+        return knor::hclust_coordinator::create(datafn, nrow, ncol, kmax,
                 max_iters, kbase::get_num_nodes(), nthread,
                 (centers.size() ? &centers[0]:NULL),
                 init, tolerance, dist_type, min_clust_size)->run();
@@ -213,13 +250,30 @@ class Hmeans {
 };
 
 class  Xmeans {
+    private:
+        const unsigned kmax;
+        const size_t max_iters;
+        const unsigned nthread;
+        std::vector<double> centers;
+        const std::string init;
+        const double tolerance;
+        const std::string dist_type;
+        const unsigned min_clust_size;
+
     public:
-        inline kbase::cluster_t fit(std::vector<double>& data, const size_t nrow,
-                const size_t ncol, const unsigned kmax, const unsigned max_iters,
+        Xmeans(const unsigned kmax, const unsigned max_iters,
                 const unsigned nthread,
-                std::vector<double>& centers, const std::string init,
-                const double tolerance, const std::string dist_type,
-                const unsigned min_clust_size) {
+                std::vector<double>& centers, const std::string& init,
+                const double tolerance, const std::string& dist_type,
+                const unsigned min_clust_size) :
+            kmax(kmax), max_iters(max_iters), nthread(nthread), centers(centers),
+            init(init), tolerance(tolerance), dist_type(dist_type),
+            min_clust_size(min_clust_size) {
+
+            }
+
+        inline kbase::cluster_t fit(std::vector<double>& data, const size_t nrow,
+                const size_t ncol) {
 
         return knor::xmeans_coordinator::create("", nrow, ncol, kmax,
                 max_iters, kbase::get_num_nodes(),
@@ -229,14 +283,10 @@ class  Xmeans {
 
         }
 
-        inline kbase::cluster_t fit(const std::string fn, const size_t nrow,
-                const size_t ncol, const unsigned kmax, const unsigned max_iters,
-                const unsigned nthread,
-                std::vector<double>& centers, const std::string init,
-                const double tolerance, const std::string dist_type,
-                const unsigned min_clust_size) {
+        inline kbase::cluster_t fit(const std::string& datafn, const size_t nrow,
+                const size_t ncol) {
 
-        return knor::xmeans_coordinator::create(fn, nrow, ncol, kmax,
+        return knor::xmeans_coordinator::create(datafn, nrow, ncol, kmax,
                 max_iters, kbase::get_num_nodes(),
                 nthread, (centers.size() ? &centers[0]:NULL), init,
                 tolerance, dist_type, min_clust_size)->run();
@@ -244,13 +294,31 @@ class  Xmeans {
 };
 
 class Gmeans {
+    private:
+        const unsigned kmax;
+        const size_t max_iters;
+        const unsigned nthread;
+        std::vector<double> centers;
+        const std::string init;
+        const double tolerance;
+        const std::string dist_type;
+        const unsigned min_clust_size;
+        const short strictness;
+
     public:
-        inline kbase::cluster_t fit(std::vector<double>& data, const size_t nrow,
-                const size_t ncol, const unsigned kmax, const unsigned max_iters,
+        Gmeans(const unsigned kmax, const unsigned max_iters,
                 const unsigned nthread,
-                std::vector<double>& centers, const std::string init,
-                const double tolerance, const std::string dist_type,
-                const unsigned min_clust_size, const short strictness) {
+                std::vector<double>& centers, const std::string& init,
+                const double tolerance, const std::string& dist_type,
+                const unsigned min_clust_size, const short strictness) :
+            kmax(kmax), max_iters(max_iters), nthread(nthread), centers(centers),
+            init(init), tolerance(tolerance), dist_type(dist_type),
+            min_clust_size(min_clust_size), strictness(strictness) {
+
+            }
+
+        inline kbase::cluster_t fit(std::vector<double>& data, const size_t nrow,
+                const size_t ncol) {
 
         return knor::gmeans_coordinator::create("", nrow, ncol, kmax,
                 max_iters, kbase::get_num_nodes(),
@@ -259,14 +327,10 @@ class Gmeans {
                 strictness)->run(&data[0]);
         }
 
-        inline kbase::cluster_t fit(const std::string fn, const size_t nrow,
-                const size_t ncol, const unsigned kmax, const unsigned max_iters,
-                const unsigned nthread,
-                std::vector<double>& centers, const std::string init,
-                const double tolerance, const std::string dist_type,
-                const unsigned min_clust_size, const short strictness) {
+        inline kbase::cluster_t fit(const std::string& datafn, const size_t nrow,
+                const size_t ncol) {
 
-        return knor::gmeans_coordinator::create(fn, nrow, ncol, kmax,
+        return knor::gmeans_coordinator::create(datafn, nrow, ncol, kmax,
                 max_iters, kbase::get_num_nodes(),
                 nthread, (centers.size() ? &centers[0]:NULL), init,
                 tolerance, dist_type,
@@ -296,6 +360,7 @@ PYBIND11_MODULE(knor, m) {
     )pbdoc";
 
     ////////////////////////// Kmeans //////////////////////////
+
     py::class_<kbase::cluster_t>(m, "cluster_t")
             .def(py::init(), "Create a cluster_t return object")
             .def("__repr__", &kbase::cluster_t::to_str);
@@ -313,7 +378,7 @@ PYBIND11_MODULE(knor, m) {
     Positional arguments:
     ---------------------
     k:
-        - The maximum number of iteration of k-means to perform
+        - The maximum number of clusters
 
     Optional arguments:
     -------------------
@@ -369,6 +434,7 @@ PYBIND11_MODULE(knor, m) {
                 );
 
     ////////////////////////// Kmeans++ //////////////////////////
+
     py::class_<KmeansPP>(m, "KmeansPP")
             .def(py::init<const unsigned, const unsigned,
                     unsigned, std::string&>(),
@@ -381,7 +447,7 @@ PYBIND11_MODULE(knor, m) {
     Positional arguments:
     ---------------------
     k:
-        - The maximum number of iteration of k-means to perform
+        - The maximum number of clusters
 
     Optional arguments:
     -------------------
@@ -402,7 +468,7 @@ PYBIND11_MODULE(knor, m) {
     Positional arguments:
     ---------------------
     data:
-        - List or numpy.ndarray
+        - List or flattened 1D numpy.ndarray
     nrow:
         - The number of samples in the dataset
     ncol:
@@ -439,7 +505,7 @@ PYBIND11_MODULE(knor, m) {
     Positional arguments:
     ---------------------
     k:
-        - The maximum number of iteration of k-means to perform
+        - The maximum number of clusters
 
     Optional arguments:
     -------------------
@@ -466,7 +532,7 @@ PYBIND11_MODULE(knor, m) {
     Positional arguments:
     ---------------------
     data:
-        - List or numpy.ndarray
+        - List or flattened 1D numpy.ndarray
     nrow:
         - The number of samples in the dataset
     ncol:
@@ -474,7 +540,7 @@ PYBIND11_MODULE(knor, m) {
        )pbdoc",
                     py::arg("data"), py::arg("nrow"), py::arg("ncol")
                 )
-            .def("fit", (kbase::cluster_t (SKmeans::*)(const std::string,
+            .def("fit", (kbase::cluster_t (SKmeans::*)(const std::string&,
                             const size_t, const size_t)) &SKmeans::fit,
     R"pbdoc(
     Run the spherical K-means algorithm on a dataset
@@ -491,153 +557,387 @@ PYBIND11_MODULE(knor, m) {
                     py::arg("datafn"), py::arg("nrow"), py::arg("ncol")
                 );
 
-    // FuzzyCMeans
+    //////////////////////////  FuzzyCMeans //////////////////////////
+
     py::class_<FuzzyCMeans>(m, "FuzzyCMeans")
-            .def(py::init(), "Create a FuzzyCMeans object")
+            .def(py::init<const unsigned, const unsigned,
+                    const unsigned, std::vector<double>&,
+                    const std::string&, const double, const std::string&,
+                    const unsigned>(),
+    R"pbdoc(
+    Perform Fuzzy C-means clustering on a data matrix. A soft variant of
+    the kmeans algorithm where each data point are assigned a contribution
+    weight to each cluster
+
+
+    Positional arguments:
+    ---------------------
+    k:
+        - The maximum number of clusters
+
+    Optional arguments:
+    -------------------
+    max_iters:
+        - Maximum number of iterations to perform
+    nthread:
+        - The number of parallel threads to run
+    centers:
+        - Initialized centroids
+    init:
+        -  The type of initialization to use "kmeanspp",
+        "random" or "forgy"
+    tolerance:
+        - The convergence tolerance
+    dist_type: What dissimilarity metric to use: "eucl", "cos",
+        "taxi", "sqeucl"
+    fuzzindex: Randomization paramerter `fuzziness coefficient/index'
+        (> 1 and < inf)
+   )pbdoc",
+                    py::arg("k"), py::arg("max_iters")=20, py::arg("nthread")=2,
+                    py::arg("centers")=std::vector<double>(),
+                    py::arg("init")="forgy", py::arg("tolerance")=-1,
+                    py::arg("dist_type")="cos", py::arg("fuzzindex")=2
+
+                        )
             .def("fit", (kbase::cluster_t (FuzzyCMeans::*)(std::vector<double>&,
-                        const size_t, const size_t, const unsigned,
-                        const unsigned, const unsigned, std::vector<double>&,
-                        const std::string, const double, const std::string,
-                        const unsigned)) &FuzzyCMeans::fit,
-                    "Compute FuzzyCMeans on the dataset provided",
-                    py::arg("data"), py::arg("nrow"), py::arg("ncol"),
-                    py::arg("k"), py::arg("max_iters")=20, py::arg("nthread")=2,
-                    py::arg("centers")=std::vector<double>(),
-                    py::arg("init")="forgy", py::arg("tolerance")=-1,
-                    py::arg("dist_type")="cos", py::arg("fuzzindex")=2
+                        const size_t, const size_t)) &FuzzyCMeans::fit,
+    R"pbdoc(
+    Compute FuzzyCMeans on a dataset
+
+    Positional arguments:
+    ---------------------
+    data:
+        - List or flattened 1D numpy.ndarray
+    nrow:
+        - The number of samples in the dataset
+    ncol:
+        - The number of features in the dataset
+       )pbdoc",
+                    py::arg("data"), py::arg("nrow"), py::arg("ncol")
                 )
-            .def("fit", (kbase::cluster_t (FuzzyCMeans::*)(
-                            const std::string, const size_t, const size_t,
-                            const unsigned, const unsigned, const unsigned,
-                            std::vector<double>&, const std::string, const double,
-                            const std::string, const unsigned)) &FuzzyCMeans::fit,
-                    "Compute FuzzyCMeans on the dataset provided",
-                    py::arg("fn"), py::arg("nrow"), py::arg("ncol"),
-                    py::arg("k"), py::arg("max_iters")=20, py::arg("nthread")=2,
-                    py::arg("centers")=std::vector<double>(),
-                    py::arg("init")="forgy", py::arg("tolerance")=-1,
-                    py::arg("dist_type")="cos", py::arg("fuzzindex")=2
+            .def("fit", (kbase::cluster_t (FuzzyCMeans::*)(const std::string&,
+                            const size_t, const size_t)) &FuzzyCMeans::fit,
+    R"pbdoc(
+    Compute FuzzyCMeans on a dataset
+
+    Positional arguments:
+    ---------------------
+    datafn:
+        - File name of data in raw row-major binary format
+    nrow:
+        - The number of samples in the dataset
+    ncol:
+        - The number of features in the dataset
+       )pbdoc",
+                    py::arg("datafn"), py::arg("nrow"), py::arg("ncol")
                     );
 
-    // Kmedoids
+    ////////////////////////// Kmedoids //////////////////////////
+
     py::class_<Kmedoids>(m, "Kmedoids")
-            .def(py::init(), "Create a CLARA object")
+            .def(py::init<const unsigned, const unsigned,
+                    const unsigned, std::vector<double>&,
+                    const std::string&,
+                    const double, const std::string&,
+                    const double>(),
+    R"pbdoc(
+	Perform k-medoids clustering on a data matrix.
+	After initialization the k-medoids algorithm partitions data by testing which
+	data member of a cluster Ci may make a better candidate as medoid (centroid)
+	by reducing the sum of distance (usually taxi), then running a reclustering
+	step with updated medoids
+
+
+    Positional arguments:
+    ---------------------
+    k:
+        - The maximum number of clusters
+
+    Optional arguments:
+    -------------------
+    max_iters:
+        - Maximum number of iterations to perform
+    nthread:
+        - The number of parallel threads to run
+    centers:
+        - Initialized medoids
+    init:
+        -  The type of initialization to use "kmeanspp",
+        "random" or "forgy"
+    tolerance:
+        - The convergence tolerance
+    dist_type: What dissimilarity metric to use: "eucl", "cos",
+        "taxi", "sqeucl"
+	sample_rate: Fraction of dataset to use for each iteration
+
+   )pbdoc",
+
+                    py::arg("k"), py::arg("max_iters")=20, py::arg("nthread")=2,
+                    py::arg("centers")=std::vector<double>(),
+                    py::arg("init")="random", py::arg("tolerance")=-1,
+                    py::arg("dist_type")="taxi", py::arg("sample_rate")=.2
+                            )
             .def("fit", (kbase::cluster_t (Kmedoids::*)(std::vector<double>&,
-                            const size_t, const size_t,
-                            const unsigned, const unsigned,
-                            const unsigned, std::vector<double>&,
-                            const std::string,
-                            const double, const std::string,
-                            const double)) &Kmedoids::fit,
-                    "Compute CLARA on the dataset provided",
-                    py::arg("data"), py::arg("nrow"), py::arg("ncol"),
-                    py::arg("k"), py::arg("max_iters")=20, py::arg("nthread")=2,
-                    py::arg("centers")=std::vector<double>(),
-                    py::arg("init")="random", py::arg("tolerance")=-1,
-                    py::arg("dist_type")="taxi", py::arg("sample_rate")=.2
+                            const size_t, const size_t)) &Kmedoids::fit,
+    R"pbdoc(
+    Compute CLARA on a dataset
+
+    Positional arguments:
+    ---------------------
+    data:
+        - List or flattened 1D numpy.ndarray
+    nrow:
+        - The number of samples in the dataset
+    ncol:
+        - The number of features in the dataset
+       )pbdoc",
+                    py::arg("data"), py::arg("nrow"), py::arg("ncol")
                 )
-            .def("fit", (kbase::cluster_t (Kmedoids::*)(
-                            const std::string, const size_t,
-                            const size_t, const unsigned, const unsigned,
-                            const unsigned, std::vector<double>&,
-                            const std::string,
-                            const double, const std::string,
-                            const double)) &Kmedoids::fit,
-                    "Compute CLARA on the dataset provided",
-                    py::arg("fn"), py::arg("nrow"), py::arg("ncol"),
-                    py::arg("k"), py::arg("max_iters")=20, py::arg("nthread")=2,
-                    py::arg("centers")=std::vector<double>(),
-                    py::arg("init")="random", py::arg("tolerance")=-1,
-                    py::arg("dist_type")="taxi", py::arg("sample_rate")=.2
+            .def("fit", (kbase::cluster_t (Kmedoids::*)(const std::string&,
+                            const size_t, const size_t)) &Kmedoids::fit,
+    R"pbdoc(
+    Compute CLARA on a dataset
+
+    Positional arguments:
+    ---------------------
+    datafn:
+        - File name of data in raw row-major binary format
+    nrow:
+        - The number of samples in the dataset
+    ncol:
+        - The number of features in the dataset
+       )pbdoc",
+                    py::arg("datafn"), py::arg("nrow"), py::arg("ncol")
                     );
 
-    // Hmeans
+    ////////////////////////// Hmeans //////////////////////////
+
     py::class_<Hmeans>(m, "Hmeans")
-            .def(py::init(), "Create a Hierarchical clustering means object")
+            .def(py::init<const unsigned,
+                    const unsigned, const unsigned,
+                    std::vector<double>&, const std::string&,
+                    const double, const std::string&,
+                    const unsigned>(),
+    R"pbdoc(
+	A recursive (not actually implemented as recursion) partitioning
+    of data into two disjoint sets at every level as described in
+    https://en.wikipedia.org/wiki/Hierarchical_clustering
+
+
+    Positional arguments:
+    ---------------------
+    kmax:
+        - The maximum number of clusters
+
+    Optional arguments:
+    -------------------
+    max_iters:
+        - Maximum number of iterations to perform
+    nthread:
+        - The number of parallel threads to run
+    centers:
+        - Initialized centroids
+    init:
+        -  The type of initialization to use "forgy" (only)
+    tolerance:
+        - The convergence tolerance
+    dist_type: What dissimilarity metric to use: "eucl", "cos",
+        "taxi", "sqeucl"
+    min_clust_size:
+        - The minimum cluster size before no splitting is permitted
+   )pbdoc",
+
+                    py::arg("kmax"), py::arg("max_iters")=20,
+                    py::arg("nthread")=2,
+                    py::arg("centers")=std::vector<double>(),
+                    py::arg("init")="forgy", py::arg("tolerance")=-1,
+                    py::arg("dist_type")="eucl", py::arg("min_clust_size")=2
+                            )
             .def("fit", (kbase::cluster_t (Hmeans::*)(std::vector<double>&,
-                            const size_t, const size_t, const unsigned,
-                            const unsigned, const unsigned,
-                            std::vector<double>&, const std::string,
-                            const double, const std::string,
-                            const unsigned)) &Hmeans::fit,
-                    "Compute Hierarchical clustering means on the dataset",
-                    py::arg("data"), py::arg("nrow"), py::arg("ncol"),
-                    py::arg("k"), py::arg("max_iters")=20, py::arg("nthread")=2,
-                    py::arg("centers")=std::vector<double>(),
-                    py::arg("init")="kmeanspp", py::arg("tolerance")=-1,
-                    py::arg("dist_type")="eucl", py::arg("min_clust_size")=2
+                            const size_t, const size_t)) &Hmeans::fit,
+    R"pbdoc(
+    Compute Hierarchical clustering means on a dataset
+
+    Positional arguments:
+    ---------------------
+    data:
+        - List or flattened 1D numpy.ndarray
+    nrow:
+        - The number of samples in the dataset
+    ncol:
+        - The number of features in the dataset
+       )pbdoc",
+                    py::arg("data"), py::arg("nrow"), py::arg("ncol")
                 )
-            .def("fit", (kbase::cluster_t (Hmeans::*)(const std::string,
-                            const size_t, const size_t, const unsigned,
-                            const unsigned, const unsigned, std::vector<double>&,
-                            const std::string, const double, const std::string,
-                            const unsigned)) &Hmeans::fit,
-                    "Compute Hierarchical clustering means on the dataset",
-                    py::arg("fn"), py::arg("nrow"), py::arg("ncol"),
-                    py::arg("k"), py::arg("max_iters")=20, py::arg("nthread")=2,
-                    py::arg("centers")=std::vector<double>(),
-                    py::arg("init")="kmeanspp", py::arg("tolerance")=-1,
-                    py::arg("dist_type")="eucl", py::arg("min_clust_size")=2
+            .def("fit", (kbase::cluster_t (Hmeans::*)(const std::string&,
+                            const size_t, const size_t)) &Hmeans::fit,
+    R"pbdoc(
+    Compute Hierarchical clustering means on a dataset
+
+    Positional arguments:
+    ---------------------
+    datafn:
+        - File name of data in raw row-major binary format
+    nrow:
+        - The number of samples in the dataset
+    ncol:
+        - The number of features in the dataset
+       )pbdoc",
+
+                    py::arg("datafn"), py::arg("nrow"), py::arg("ncol")
                     );
 
-    // Xmeans
+    ////////////////////////// Xmeans //////////////////////////
+
     py::class_<Xmeans>(m, "Xmeans")
-            .def(py::init(), "Create an Xmeans clustering object")
-            .def("fit", (kbase::cluster_t (Xmeans::*)(std::vector<double>&,
-                            const size_t, const size_t,
-                            const unsigned, const unsigned,
-                            const unsigned, std::vector<double>&,
-                            const std::string, const double, const std::string,
-                            const unsigned)) &Xmeans::fit,
-                    "Compute Xmeans on the dataset provided",
-                    py::arg("data"), py::arg("nrow"), py::arg("ncol"),
-                    py::arg("k"), py::arg("max_iters")=20, py::arg("nthread")=2,
-                    py::arg("centers")=std::vector<double>(),
-                    py::arg("init")="kmeanspp", py::arg("tolerance")=-1,
-                    py::arg("dist_type")="eucl", py::arg("min_clust_size")=2
+        .def(py::init<const unsigned, const unsigned,
+                const unsigned, std::vector<double>&,
+                const std::string&, const double, const std::string&,
+                const unsigned>(),
+    R"pbdoc(
+    A recursive (not acutally implemented as recursion) partitioning
+    of data into two disjoint sets at every level as described in:
+    http://cs.uef.fi/~zhao/Courses/Clustering2012/Xmeans.pdf
+
+
+    Positional arguments:
+    ---------------------
+    kmax:
+        - The maximum number of clusters
+
+    Optional arguments:
+    -------------------
+    max_iters:
+        - Maximum number of iterations to perform
+    nthread:
+        - The number of parallel threads to run
+    centers:
+        - Initialized centroids
+    init:
+        -  The type of initialization to use "forgy" (only)
+    tolerance:
+        - The convergence tolerance
+    dist_type: What dissimilarity metric to use: "eucl", "cos",
+        "taxi", "sqeucl"
+    min_clust_size:
+        - The minimum cluster size before no splitting is permitted
+   )pbdoc",
+                py::arg("kmax"), py::arg("max_iters")=20, py::arg("nthread")=2,
+                py::arg("centers")=std::vector<double>(),
+                py::arg("init")="forgy", py::arg("tolerance")=-1,
+                py::arg("dist_type")="eucl", py::arg("min_clust_size")=2
                 )
-            .def("fit", (kbase::cluster_t (Xmeans::*)(const std::string,
-                            const size_t, const size_t, const unsigned,
-                            const unsigned, const unsigned, std::vector<double>&,
-                            const std::string, const double, const std::string,
-                            const unsigned)) &Xmeans::fit,
-                    "Compute Xmeans on the dataset provided",
-                    py::arg("fn"), py::arg("nrow"), py::arg("ncol"),
-                    py::arg("k"), py::arg("max_iters")=20, py::arg("nthread")=2,
-                    py::arg("centers")=std::vector<double>(),
-                    py::arg("init")="kmeanspp", py::arg("tolerance")=-1,
-                    py::arg("dist_type")="eucl", py::arg("min_clust_size")=2
+            .def("fit", (kbase::cluster_t (Xmeans::*)(std::vector<double>&,
+                            const size_t, const size_t)) &Xmeans::fit,
+    R"pbdoc(
+    Compute X-means clustering means on a dataset
+
+    Positional arguments:
+    ---------------------
+    data:
+        - List or flattened 1D numpy.ndarray
+    nrow:
+        - The number of samples in the dataset
+    ncol:
+        - The number of features in the dataset
+       )pbdoc",
+                    py::arg("data"), py::arg("nrow"), py::arg("ncol")
+                )
+            .def("fit", (kbase::cluster_t (Xmeans::*)(const std::string&,
+                            const size_t, const size_t)) &Xmeans::fit,
+    R"pbdoc(
+    Compute X-means clustering means on a dataset
+
+    Positional arguments:
+    ---------------------
+    datafn:
+        - File name of data in raw row-major binary format
+    nrow:
+        - The number of samples in the dataset
+    ncol:
+        - The number of features in the dataset
+       )pbdoc",
+                    py::arg("datafn"), py::arg("nrow"), py::arg("ncol")
                     );
 
-    // Gmeans
+    ////////////////////////// Gmeans //////////////////////////
+
     py::class_<Gmeans>(m, "Gmeans")
-            .def(py::init(), "Create an Gmeans clustering object")
+            .def(py::init<const unsigned, const unsigned, const unsigned,
+                    std::vector<double>&, const std::string&,
+                    const double, const std::string&,
+                    const unsigned, const short>(),
+
+    R"pbdoc(
+    Perform a parallel hierarchical clustering using the g-means algorithm
+
+    A hierarchical cluster algorithm that chooses the number of clusters based on
+    the Anderson Darling statistic described in:
+    http://papers.nips.cc/paper/2526-learning-the-k-in-k-means.pdf
+
+
+    Positional arguments:
+    ---------------------
+    kmax:
+        - The maximum number of clusters
+
+    Optional arguments:
+    -------------------
+    max_iters:
+        - Maximum number of iterations to perform
+    nthread:
+        - The number of parallel threads to run
+    centers:
+        - Initialized centroids
+    init:
+        -  The type of initialization to use "forgy" (only)
+    tolerance:
+        - The convergence tolerance
+    dist_type: What dissimilarity metric to use: "eucl", "cos",
+        "taxi", "sqeucl"
+    min_clust_size:
+        - The minimum cluster size before no splitting is permitted
+    strictness: The Anderson-Darling strictness level. Between 1 and 4 inclusive
+   )pbdoc",
+
+                    py::arg("kmax"), py::arg("max_iters")=20, py::arg("nthread")=2,
+                    py::arg("centers")=std::vector<double>(),
+                    py::arg("init")="forgy", py::arg("tolerance")=-1,
+                    py::arg("dist_type")="eucl", py::arg("min_clust_size")=2,
+                    py::arg("strictness")=4
+                    )
+
             .def("fit", (kbase::cluster_t (Gmeans::*)(std::vector<double>&,
-                            const size_t, const size_t, const unsigned,
-                            const unsigned, const unsigned,
-                            std::vector<double>&, const std::string,
-                            const double, const std::string,
-                            const unsigned, const short)) &Gmeans::fit,
-                    "Compute Gmeans on the dataset provided",
-                    py::arg("data"), py::arg("nrow"), py::arg("ncol"),
-                    py::arg("k"), py::arg("max_iters")=20, py::arg("nthread")=2,
-                    py::arg("centers")=std::vector<double>(),
-                    py::arg("init")="kmeanspp", py::arg("tolerance")=-1,
-                    py::arg("dist_type")="eucl", py::arg("min_clust_size")=2,
-                    py::arg("strictness")=4
+                            const size_t, const size_t)) &Gmeans::fit,
+    R"pbdoc(
+    Compute G-means clustering means on a dataset
+
+    Positional arguments:
+    ---------------------
+    data:
+        - List or flattened 1D numpy.ndarray
+    nrow:
+        - The number of samples in the dataset
+    ncol:
+        - The number of features in the dataset
+       )pbdoc",
+                    py::arg("data"), py::arg("nrow"), py::arg("ncol")
                 )
-            .def("fit", (kbase::cluster_t (Gmeans::*)(const std::string,
-                            const size_t, const size_t, const unsigned,
-                            const unsigned, const unsigned, std::vector<double>&,
-                            const std::string, const double, const std::string,
-                            const unsigned, const short)) &Gmeans::fit,
-                    "Compute Gmeans on the dataset provided",
-                    py::arg("fn"), py::arg("nrow"), py::arg("ncol"),
-                    py::arg("k"), py::arg("max_iters")=20, py::arg("nthread")=2,
-                    py::arg("centers")=std::vector<double>(),
-                    py::arg("init")="kmeanspp", py::arg("tolerance")=-1,
-                    py::arg("dist_type")="eucl", py::arg("min_clust_size")=2,
-                    py::arg("strictness")=4
+            .def("fit", (kbase::cluster_t (Gmeans::*)(const std::string&,
+                            const size_t, const size_t)) &Gmeans::fit,
+    R"pbdoc(
+    Compute G-means clustering means on a dataset
+
+    Positional arguments:
+    ---------------------
+    datafn:
+        - File name of data in raw row-major binary format
+    nrow:
+        - The number of samples in the dataset
+    ncol:
+        - The number of features in the dataset
+       )pbdoc",
+                    py::arg("datafn"), py::arg("nrow"), py::arg("ncol")
                 );
 
     // Versioning information
