@@ -472,11 +472,7 @@ PYBIND11_MODULE(knor, m) {
     import numpy as np
     n = 100; m = 10; k = 5
     data = np.random.random((n, m)).flatten()
-    km = knor.KmeansPP    import numpy as np
-    n = 100; m = 10; k = 5
-    data = np.random.random((n, m)).flatten()
-    km = knor.KmeansPP(k=k, nstart=5)
-    ret = km.fit(data, n, m)(k=k, nstart=5)
+    km = knor.KmeansPP(k, nstart=5)
     ret = km.fit(data, n, m)
        )pbdoc",
             py::arg("k"), py::arg("nstart")=1, py::arg("nthread")=2,
@@ -541,6 +537,14 @@ PYBIND11_MODULE(knor, m) {
         "random" or "forgy"
     tolerance:
         - The convergence tolerance
+
+    Example:
+    --------
+    import numpy as np
+    n = 100; m = 10; k = 5
+    data = np.random.random((n, m)).flatten()
+    km = knor.SKmeans(k)
+    ret = km.fit(data, n, m)
    )pbdoc",
             py::arg("k"), py::arg("max_iters")=20, py::arg("nthread")=2,
         py::arg("centers")=std::vector<double>(),
@@ -633,6 +637,14 @@ PYBIND11_MODULE(knor, m) {
         - The number of samples in the dataset
     ncol:
         - The number of features in the dataset
+
+    Example:
+    --------
+    import numpy as np
+    n = 100; m = 10; k = 5
+    data = np.random.random((n, m)).flatten()
+    km = knor.FuzzyCMeans(k)
+    ret = km.fit(data, n, m)
        )pbdoc",
                     py::arg("data"), py::arg("nrow"), py::arg("ncol")
                 )
@@ -690,6 +702,13 @@ PYBIND11_MODULE(knor, m) {
         "taxi", "sqeucl"
 	sample_rate: Fraction of dataset to use for each iteration
 
+    Example:
+    --------
+    import numpy as np
+    n = 100; m = 10; k = 5
+    data = np.random.random((n, m)).flatten()
+    km = knor.Kmedoids(k, sample_rate=.5)
+    ret = km.fit(data, n, m)
    )pbdoc",
 
                     py::arg("k"), py::arg("max_iters")=20, py::arg("nthread")=2,
@@ -765,6 +784,14 @@ PYBIND11_MODULE(knor, m) {
         "taxi", "sqeucl"
     min_clust_size:
         - The minimum cluster size before no splitting is permitted
+
+    Example:
+    --------
+    import numpy as np
+    n = 100; m = 10; kmax = 5
+    data = np.random.random((n, m)).flatten()
+    km = knor.Hmeans(k)
+    ret = km.fit(data, n, m)
    )pbdoc",
 
                     py::arg("kmax"), py::arg("max_iters")=20,
@@ -840,6 +867,14 @@ PYBIND11_MODULE(knor, m) {
         "taxi", "sqeucl"
     min_clust_size:
         - The minimum cluster size before no splitting is permitted
+
+    Example:
+    --------
+    import numpy as np
+    n = 100; m = 10; kmax = 5
+    data = np.random.random((n, m)).flatten()
+    km = knor.Xmeans(k)
+    ret = km.fit(data, n, m)
    )pbdoc",
                 py::arg("kmax"), py::arg("max_iters")=20, py::arg("nthread")=2,
                 py::arg("centers")=std::vector<double>(),
@@ -917,6 +952,14 @@ PYBIND11_MODULE(knor, m) {
     min_clust_size:
         - The minimum cluster size before no splitting is permitted
     strictness: The Anderson-Darling strictness level. Between 1 and 4 inclusive
+
+    Example:
+    --------
+    import numpy as np
+    n = 100; m = 10; kmax = 5
+    data = np.random.random((n, m)).flatten()
+    km = knor.Gmeans(k)
+    ret = km.fit(data, n, m)
    )pbdoc",
 
                     py::arg("kmax"), py::arg("max_iters")=20, py::arg("nthread")=2,
