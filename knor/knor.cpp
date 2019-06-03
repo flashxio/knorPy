@@ -83,37 +83,44 @@ class KmeansPP {
 };
 
 class SKmeans {
+    private:
+        unsigned k;
+        size_t max_iters;
+        unsigned nthread;
+        std::vector<double> centers;
+        std::string init;
+        double tolerance;
+
     public:
-        kbase::cluster_t fit(std::vector<double>& data, const size_t nrow,
-                const size_t ncol, const unsigned k,
-                size_t max_iters,
-                unsigned nthread,
-                std::vector<double>& centers, std::string init,
-                double tolerance, std::string dist_type) {
+        SKmeans(const unsigned k, size_t max_iters, unsigned nthread,
+                std::vector<double>& centers, std::string& init,
+                double tolerance) : k(k),
+        max_iters(max_iters), nthread(nthread), centers(centers),
+        init(init), tolerance(tolerance) {
+        }
+
+        inline kbase::cluster_t fit(std::vector<double>& data,
+                const size_t nrow, const size_t ncol) {
 
             return knor::skmeans_coordinator::create(
                     "", nrow, ncol, k, max_iters, kbase::get_num_nodes(),
                     nthread, (centers.size() ? &centers[0]:NULL), init,
-                    tolerance, dist_type)->run(&data[0]);
+                    tolerance, "cos")->run(&data[0]);
         }
 
         inline kbase::cluster_t fit(const std::string datafn, const size_t nrow,
-                const size_t ncol, const unsigned k,
-                size_t max_iters,
-                unsigned nthread,
-                std::vector<double>& centers, std::string init,
-                double tolerance, std::string dist_type) {
+                const size_t ncol) {
 
             return knor::skmeans_coordinator::create(
                     datafn, nrow, ncol, k, max_iters, kbase::get_num_nodes(),
                     nthread, (centers.size() ? &centers[0]:NULL),
-                    init, tolerance, dist_type)->run();
+                    init, tolerance, "cos")->run();
         }
 };
 
 class FuzzyCMeans {
     public:
-        kbase::cluster_t fit(std::vector<double>& data, const size_t nrow,
+        inline kbase::cluster_t fit(std::vector<double>& data, const size_t nrow,
                 const size_t ncol, const unsigned k, const unsigned max_iters,
                 const unsigned nthread, std::vector<double>& centers,
                 const std::string init, const double tolerance,
@@ -126,7 +133,7 @@ class FuzzyCMeans {
                     tolerance, dist_type, fuzzindex)->run(&data[0]);
         }
 
-        kbase::cluster_t fit(const std::string fn, const size_t nrow,
+        inline kbase::cluster_t fit(const std::string fn, const size_t nrow,
                 const size_t ncol, const unsigned k, const unsigned max_iters,
                 const unsigned nthread, std::vector<double>& centers,
                 const std::string init, const double tolerance,
@@ -177,7 +184,7 @@ class Kmedoids {
 
 class Hmeans {
     public:
-        kbase::cluster_t fit(std::vector<double>& data,
+        inline kbase::cluster_t fit(std::vector<double>& data,
                 const size_t nrow, const size_t ncol,
                 const unsigned kmax, const unsigned max_iters,
                 const unsigned nthread,
@@ -191,7 +198,7 @@ class Hmeans {
                 init, tolerance, dist_type, min_clust_size)->run(&data[0]);
         }
 
-        kbase::cluster_t fit(const std::string fn,
+        inline kbase::cluster_t fit(const std::string fn,
                 const size_t nrow,
                 const size_t ncol, const unsigned kmax, const unsigned max_iters,
                 const unsigned nthread, std::vector<double>& centers,
@@ -207,7 +214,7 @@ class Hmeans {
 
 class  Xmeans {
     public:
-        kbase::cluster_t fit(std::vector<double>& data, const size_t nrow,
+        inline kbase::cluster_t fit(std::vector<double>& data, const size_t nrow,
                 const size_t ncol, const unsigned kmax, const unsigned max_iters,
                 const unsigned nthread,
                 std::vector<double>& centers, const std::string init,
@@ -222,7 +229,7 @@ class  Xmeans {
 
         }
 
-        kbase::cluster_t fit(const std::string fn, const size_t nrow,
+        inline kbase::cluster_t fit(const std::string fn, const size_t nrow,
                 const size_t ncol, const unsigned kmax, const unsigned max_iters,
                 const unsigned nthread,
                 std::vector<double>& centers, const std::string init,
@@ -238,7 +245,7 @@ class  Xmeans {
 
 class Gmeans {
     public:
-        kbase::cluster_t fit(std::vector<double>& data, const size_t nrow,
+        inline kbase::cluster_t fit(std::vector<double>& data, const size_t nrow,
                 const size_t ncol, const unsigned kmax, const unsigned max_iters,
                 const unsigned nthread,
                 std::vector<double>& centers, const std::string init,
@@ -252,7 +259,7 @@ class Gmeans {
                 strictness)->run(&data[0]);
         }
 
-        kbase::cluster_t fit(const std::string fn, const size_t nrow,
+        inline kbase::cluster_t fit(const std::string fn, const size_t nrow,
                 const size_t ncol, const unsigned kmax, const unsigned max_iters,
                 const unsigned nthread,
                 std::vector<double>& centers, const std::string init,
@@ -288,7 +295,7 @@ PYBIND11_MODULE(knor, m) {
            Gmeans
     )pbdoc";
 
-    // Kmeans
+    ////////////////////////// Kmeans //////////////////////////
     py::class_<kbase::cluster_t>(m, "cluster_t")
             .def(py::init(), "Create a cluster_t return object")
             .def("__repr__", &kbase::cluster_t::to_str);
@@ -361,7 +368,7 @@ PYBIND11_MODULE(knor, m) {
                     py::arg("datafn"), py::arg("nrow"), py::arg("ncol")
                 );
 
-    // Kmeans++
+    ////////////////////////// Kmeans++ //////////////////////////
     py::class_<KmeansPP>(m, "KmeansPP")
             .def(py::init<const unsigned, const unsigned,
                     unsigned, std::string&>(),
@@ -390,7 +397,7 @@ PYBIND11_MODULE(knor, m) {
             .def("fit", (kbase::pp_pair (KmeansPP::*)(std::vector<double>&,
                             const size_t, const size_t)) &KmeansPP::fit,
     R"pbdoc(
-    Run the K-means++ algorithm
+    Run the K-means++ algorithm on a dataset
 
     Positional arguments:
     ---------------------
@@ -401,12 +408,11 @@ PYBIND11_MODULE(knor, m) {
     ncol:
         - The number of features in the dataset
        )pbdoc",
-            py::arg("data"), py::arg("nrow"), py::arg("ncol")
-                )
+            py::arg("data"), py::arg("nrow"), py::arg("ncol"))
             .def("fit", (kbase::pp_pair (KmeansPP::*)(
-                    const std::string&, const size_t, const size_t)) &KmeansPP::fit,
+                const std::string&, const size_t, const size_t)) &KmeansPP::fit,
     R"pbdoc(
-    Run the K-means++ algorithm
+    Run the K-means++ algorithm on a dataset
 
     Positional arguments:
     ---------------------
@@ -420,41 +426,79 @@ PYBIND11_MODULE(knor, m) {
                     py::arg("datafn"), py::arg("nrow"), py::arg("ncol")
                 );
 
-    // SKmeans
+    //////////////////////////  SKmeans //////////////////////////
+
     py::class_<SKmeans>(m, "SKmeans")
-            .def(py::init(), "Create a Spherical Kmeans object")
+            .def(py::init<const unsigned, size_t, unsigned,
+                std::vector<double>&, std::string&, double>(),
+   R"pbdoc(
+   Perform spherical k-means clustering on a data matrix. Similar to the
+   k-means algorithm differing only in that data features are min-max
+   normalized the dissimilarity metric is Cosine distance.
+
+    Positional arguments:
+    ---------------------
+    k:
+        - The maximum number of iteration of k-means to perform
+
+    Optional arguments:
+    -------------------
+    max_iters:
+        - Maximum number of iterations to perform
+    nthread:
+        - The number of parallel threads to run
+    centers:
+        - Initialized centroids
+    init:
+        -  The type of initialization to use "kmeanspp",
+        "random" or "forgy"
+    tolerance:
+        - The convergence tolerance
+   )pbdoc",
+            py::arg("k"), py::arg("max_iters")=20, py::arg("nthread")=2,
+        py::arg("centers")=std::vector<double>(),
+        py::arg("init")="kmeanspp", py::arg("tolerance")=-1)
             .def("fit", (kbase::cluster_t (SKmeans::*)(std::vector<double>&,
-                            const size_t,
-                            const size_t, const unsigned, size_t,
-                            unsigned, std::vector<double>&, std::string,
-                            double, std::string)) &SKmeans::fit,
-                    "Compute spherical kmeans on the dataset provided",
-                    py::arg("data"), py::arg("nrow"), py::arg("ncol"),
-                    py::arg("k"), py::arg("max_iters")=20, py::arg("nthread")=2,
-                    py::arg("centers")=std::vector<double>(),
-                    py::arg("init")="kmeanspp", py::arg("tolerance")=-1,
-                    py::arg("dist_type")="cos"
+                            const size_t, const size_t)) &SKmeans::fit,
+    R"pbdoc(
+    Run the spherical k-means algorithm on the dataset
+
+    Positional arguments:
+    ---------------------
+    data:
+        - List or numpy.ndarray
+    nrow:
+        - The number of samples in the dataset
+    ncol:
+        - The number of features in the dataset
+       )pbdoc",
+                    py::arg("data"), py::arg("nrow"), py::arg("ncol")
                 )
             .def("fit", (kbase::cluster_t (SKmeans::*)(const std::string,
-                            const size_t, const size_t, const unsigned,
-                            size_t, unsigned, std::vector<double>&, std::string,
-                            double, std::string)) &SKmeans::fit,
-                    "Compute spherical kmeans on the dataset provided",
-                    py::arg("datafn"), py::arg("nrow"), py::arg("ncol"),
-                    py::arg("k"), py::arg("max_iters")=20, py::arg("nthread")=2,
-                    py::arg("centers")=std::vector<double>(),
-                    py::arg("init")="kmeanspp", py::arg("tolerance")=-1,
-                    py::arg("dist_type")="cos"
+                            const size_t, const size_t)) &SKmeans::fit,
+    R"pbdoc(
+    Run the spherical K-means algorithm on a dataset
+
+    Positional arguments:
+    ---------------------
+    datafn:
+        - File name of data in raw row-major binary format
+    nrow:
+        - The number of samples in the dataset
+    ncol:
+        - The number of features in the dataset
+       )pbdoc",
+                    py::arg("datafn"), py::arg("nrow"), py::arg("ncol")
                 );
 
     // FuzzyCMeans
     py::class_<FuzzyCMeans>(m, "FuzzyCMeans")
             .def(py::init(), "Create a FuzzyCMeans object")
             .def("fit", (kbase::cluster_t (FuzzyCMeans::*)(std::vector<double>&,
-                            const size_t, const size_t, const unsigned,
-                            const unsigned, const unsigned, std::vector<double>&,
-                            const std::string, const double, const std::string,
-                            const unsigned)) &FuzzyCMeans::fit,
+                        const size_t, const size_t, const unsigned,
+                        const unsigned, const unsigned, std::vector<double>&,
+                        const std::string, const double, const std::string,
+                        const unsigned)) &FuzzyCMeans::fit,
                     "Compute FuzzyCMeans on the dataset provided",
                     py::arg("data"), py::arg("nrow"), py::arg("ncol"),
                     py::arg("k"), py::arg("max_iters")=20, py::arg("nthread")=2,
