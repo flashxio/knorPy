@@ -414,7 +414,8 @@ PYBIND11_MODULE(knor, m) {
         - The number of samples in the dataset
     ncol:
         - The number of features in the dataset
-       )pbdoc"
+       )pbdoc",
+            py::arg("data"), py::arg("nrow"), py::arg("ncol")
             )
             .def("fit", (kbase::cluster_t (Kmeans::*)(const std::string&,
                             const size_t, const size_t)) &Kmeans::fit,
@@ -662,8 +663,7 @@ PYBIND11_MODULE(knor, m) {
     centers:
         - Initialized medoids
     init:
-        -  The type of initialization to use "kmeanspp",
-        "random" or "forgy"
+        -  The type of initialization to use "forgy" (only)
     tolerance:
         - The convergence tolerance
     dist_type: What dissimilarity metric to use: "eucl", "cos",
@@ -674,7 +674,7 @@ PYBIND11_MODULE(knor, m) {
 
                     py::arg("k"), py::arg("max_iters")=20, py::arg("nthread")=2,
                     py::arg("centers")=std::vector<double>(),
-                    py::arg("init")="random", py::arg("tolerance")=-1,
+                    py::arg("init")="forgy", py::arg("tolerance")=-1,
                     py::arg("dist_type")="taxi", py::arg("sample_rate")=.2
                             )
             .def("fit", (kbase::cluster_t (Kmedoids::*)(std::vector<double>&,
@@ -707,7 +707,7 @@ PYBIND11_MODULE(knor, m) {
     ncol:
         - The number of features in the dataset
        )pbdoc",
-                    py::arg("datafn"), py::arg("nrow"), py::arg("ncol")
+            py::arg("datafn"), py::arg("nrow"), py::arg("ncol")
                     );
 
     ////////////////////////// Hmeans //////////////////////////
@@ -783,9 +783,8 @@ PYBIND11_MODULE(knor, m) {
     ncol:
         - The number of features in the dataset
        )pbdoc",
-
-                    py::arg("datafn"), py::arg("nrow"), py::arg("ncol")
-                    );
+            py::arg("datafn"), py::arg("nrow"), py::arg("ncol")
+                );
 
     ////////////////////////// Xmeans //////////////////////////
 
