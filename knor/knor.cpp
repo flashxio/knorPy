@@ -395,6 +395,14 @@ PYBIND11_MODULE(knor, m) {
         - The convergence tolerance
     dist_type: What dissimilarity metric to use: "eucl", "cos",
         "taxi", "sqeucl"
+
+    Example:
+    --------
+    import numpy as np
+    n = 100; m = 10; k = 5
+    data = np.random.random((n, m)).flatten()
+    km = knor.Kmeans(k)
+    ret = km.fit(data, n, m)
        )pbdoc",
             py::arg("k"), py::arg("max_iters")=20, py::arg("nthread")=2,
             py::arg("centers")=std::vector<double>(),
@@ -458,6 +466,18 @@ PYBIND11_MODULE(knor, m) {
         - The number of parallel threads to run
     dist_type: What dissimilarity metric to use: "eucl", "cos",
         "taxi", "sqeucl"
+
+    Example:
+    --------
+    import numpy as np
+    n = 100; m = 10; k = 5
+    data = np.random.random((n, m)).flatten()
+    km = knor.KmeansPP    import numpy as np
+    n = 100; m = 10; k = 5
+    data = np.random.random((n, m)).flatten()
+    km = knor.KmeansPP(k=k, nstart=5)
+    ret = km.fit(data, n, m)(k=k, nstart=5)
+    ret = km.fit(data, n, m)
        )pbdoc",
             py::arg("k"), py::arg("nstart")=1, py::arg("nthread")=2,
             py::arg("dist_type")="eucl")
