@@ -50,3 +50,5 @@ clean:
 	rm -f *.pyc
 	rm -rf __pycache__
 	rm -rf knor/__pycache__
+	rm -rf knor.egg-info/
+	rm -rf var/
