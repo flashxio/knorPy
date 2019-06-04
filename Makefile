@@ -52,3 +52,4 @@ clean:
 	rm -rf knor/__pycache__
 	rm -rf knor.egg-info/
 	rm -rf var/
+	rm -rf tmp/
