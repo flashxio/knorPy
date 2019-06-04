@@ -52,6 +52,27 @@ class Kmeans {
                     nthread, (centers.size() ? &centers[0]:NULL), init,
                     tolerance, dist_type)->run();
         }
+
+        inline kbase::cluster_t fit(py::buffer buf) {
+            /* Request a buffer descriptor from Python */
+            py::buffer_info info = buf.request();
+
+            /* Some sanity checks ... */
+            if (info.format != "d")
+                throw std::runtime_error(
+                        "Incompatible format: expected a double array!");
+
+            if (info.ndim != 2)
+                throw std::runtime_error("Incompatible buffer dimension!");
+
+            double* data = static_cast<double*>(info.ptr);
+
+            return kprune::kmeans_task_coordinator::create(
+                    "", info.shape[0], info.shape[1], k, max_iters,
+                    kbase::get_num_nodes(),
+                    nthread, (centers.size() ? &centers[0]:NULL), init,
+                    tolerance, dist_type)->run(&data[0]);
+        }
 };
 
 class KmeansPP {
@@ -65,7 +86,7 @@ class KmeansPP {
         KmeansPP(const unsigned k, const unsigned nstart,
                 unsigned nthread, std::string& dist_type) :
             k(k), nstart(nstart), nthread(nthread), dist_type(dist_type) {
-        }
+            }
 
         inline kbase::pp_pair fit(std::vector<double>& data, const size_t nrow,
                 const size_t ncol) {
@@ -78,6 +99,24 @@ class KmeansPP {
                 const size_t ncol) {
 
             return kbase::kmeansPP(datafn, nrow, ncol, k,
+                    nstart, nthread, dist_type);
+        }
+
+        inline kbase::pp_pair fit(py::buffer buf) {
+            /* Request a buffer descriptor from Python */
+            py::buffer_info info = buf.request();
+
+            /* Some sanity checks ... */
+            if (info.format != "d")
+                throw std::runtime_error(
+                        "Incompatible format: expected a double array!");
+
+            if (info.ndim != 2)
+                throw std::runtime_error("Incompatible buffer dimension!");
+
+            double* data = static_cast<double*>(info.ptr);
+
+            return kbase::kmeansPP(&data[0], info.shape[0], info.shape[1], k,
                     nstart, nthread, dist_type);
         }
 };
@@ -115,6 +154,27 @@ class SKmeans {
                     datafn, nrow, ncol, k, max_iters, kbase::get_num_nodes(),
                     nthread, (centers.size() ? &centers[0]:NULL),
                     init, tolerance, "cos")->run();
+        }
+
+        inline kbase::cluster_t fit(py::buffer buf) {
+            /* Request a buffer descriptor from Python */
+            py::buffer_info info = buf.request();
+
+            /* Some sanity checks ... */
+            if (info.format != "d")
+                throw std::runtime_error(
+                        "Incompatible format: expected a double array!");
+
+            if (info.ndim != 2)
+                throw std::runtime_error("Incompatible buffer dimension!");
+
+            double* data = static_cast<double*>(info.ptr);
+
+            return knor::skmeans_coordinator::create(
+                    "", info.shape[0], info.shape[1], k, max_iters,
+                    kbase::get_num_nodes(),
+                    nthread, (centers.size() ? &centers[0]:NULL), init,
+                    tolerance, "cos")->run(&data[0]);
         }
 };
 
@@ -157,6 +217,27 @@ class FuzzyCMeans {
                     nthread, (centers.size() ? &centers[0]:NULL),
                     init, tolerance, dist_type, fuzzindex)->run();
         }
+
+        inline kbase::cluster_t fit(py::buffer buf) {
+            /* Request a buffer descriptor from Python */
+            py::buffer_info info = buf.request();
+
+            /* Some sanity checks ... */
+            if (info.format != "d")
+                throw std::runtime_error(
+                        "Incompatible format: expected a double array!");
+
+            if (info.ndim != 2)
+                throw std::runtime_error("Incompatible buffer dimension!");
+
+            double* data = static_cast<double*>(info.ptr);
+
+            return knor::fcm_coordinator::create(
+                    "", info.shape[0], info.shape[1], k, max_iters,
+                    kbase::get_num_nodes(),
+                    nthread, (centers.size() ? &centers[0]:NULL), init,
+                    tolerance, dist_type, fuzzindex)->run(&data[0]);
+        }
 };
 
 class Kmedoids {
@@ -178,16 +259,16 @@ class Kmedoids {
             k(k), max_iters(max_iters), nthread(nthread), centers(centers),
             init(init), tolerance(tolerance), dist_type(dist_type),
             sample_rate(sample_rate) {
-        }
+            }
 
         inline kbase::cluster_t fit(std::vector<double>& data, const size_t nrow,
                 const size_t ncol) {
 
-                return knor::medoid_coordinator::create("",
-                        nrow, ncol, k, max_iters,
-                        kbase::get_num_nodes(), nthread,
-                        (centers.size() ? &centers[0]:NULL),
-                        init, tolerance, dist_type, sample_rate)->run(&data[0]);
+            return knor::medoid_coordinator::create("",
+                    nrow, ncol, k, max_iters,
+                    kbase::get_num_nodes(), nthread,
+                    (centers.size() ? &centers[0]:NULL),
+                    init, tolerance, dist_type, sample_rate)->run(&data[0]);
         }
 
         inline kbase::cluster_t fit(const std::string& datafn, const size_t nrow,
@@ -205,6 +286,27 @@ class Kmedoids {
             return coord->run(&data[0]);
             // TODO: if (centers) delete [] centers;
             // TODO: delete data
+        }
+
+        inline kbase::cluster_t fit(py::buffer buf) {
+            /* Request a buffer descriptor from Python */
+            py::buffer_info info = buf.request();
+
+            /* Some sanity checks ... */
+            if (info.format != "d")
+                throw std::runtime_error(
+                        "Incompatible format: expected a double array!");
+
+            if (info.ndim != 2)
+                throw std::runtime_error("Incompatible buffer dimension!");
+
+            double* data = static_cast<double*>(info.ptr);
+
+            return knor::medoid_coordinator::create("",
+                    info.shape[0], info.shape[1], k, max_iters,
+                    kbase::get_num_nodes(), nthread,
+                    (centers.size() ? &centers[0]:NULL),
+                    init, tolerance, dist_type, sample_rate)->run(&data[0]);
         }
 };
 
@@ -228,24 +330,45 @@ class Hmeans {
             kmax(kmax), max_iters(max_iters), nthread(nthread), centers(centers),
             init(init), tolerance(tolerance), dist_type(dist_type),
             min_clust_size(min_clust_size)  {
-        }
+            }
 
         inline kbase::cluster_t fit(std::vector<double>& data,
                 const size_t nrow, const size_t ncol) {
 
-        return knor::hclust_coordinator::create("", nrow, ncol, kmax,
-                max_iters, kbase::get_num_nodes(), nthread,
-                (centers.size() ? &centers[0]:NULL),
-                init, tolerance, dist_type, min_clust_size)->run(&data[0]);
+            return knor::hclust_coordinator::create("", nrow, ncol, kmax,
+                    max_iters, kbase::get_num_nodes(), nthread,
+                    (centers.size() ? &centers[0]:NULL),
+                    init, tolerance, dist_type, min_clust_size)->run(&data[0]);
         }
 
         inline kbase::cluster_t fit(const std::string& datafn,
                 const size_t nrow, const size_t ncol) {
 
-        return knor::hclust_coordinator::create(datafn, nrow, ncol, kmax,
-                max_iters, kbase::get_num_nodes(), nthread,
-                (centers.size() ? &centers[0]:NULL),
-                init, tolerance, dist_type, min_clust_size)->run();
+            return knor::hclust_coordinator::create(datafn, nrow, ncol, kmax,
+                    max_iters, kbase::get_num_nodes(), nthread,
+                    (centers.size() ? &centers[0]:NULL),
+                    init, tolerance, dist_type, min_clust_size)->run();
+        }
+
+        inline kbase::cluster_t fit(py::buffer buf) {
+            /* Request a buffer descriptor from Python */
+            py::buffer_info info = buf.request();
+
+            /* Some sanity checks ... */
+            if (info.format != "d")
+                throw std::runtime_error(
+                        "Incompatible format: expected a double array!");
+
+            if (info.ndim != 2)
+                throw std::runtime_error("Incompatible buffer dimension!");
+
+            double* data = static_cast<double*>(info.ptr);
+
+            return knor::hclust_coordinator::create("", info.shape[0],
+                    info.shape[1], kmax,
+                    max_iters, kbase::get_num_nodes(), nthread,
+                    (centers.size() ? &centers[0]:NULL),
+                    init, tolerance, dist_type, min_clust_size)->run(&data[0]);
         }
 };
 
@@ -275,21 +398,43 @@ class  Xmeans {
         inline kbase::cluster_t fit(std::vector<double>& data, const size_t nrow,
                 const size_t ncol) {
 
-        return knor::xmeans_coordinator::create("", nrow, ncol, kmax,
-                max_iters, kbase::get_num_nodes(),
-                nthread, (centers.size() ? &centers[0]:NULL),
-                init, tolerance, dist_type,
-                min_clust_size)->run(&data[0]);
+            return knor::xmeans_coordinator::create("", nrow, ncol, kmax,
+                    max_iters, kbase::get_num_nodes(),
+                    nthread, (centers.size() ? &centers[0]:NULL),
+                    init, tolerance, dist_type,
+                    min_clust_size)->run(&data[0]);
 
         }
 
         inline kbase::cluster_t fit(const std::string& datafn, const size_t nrow,
                 const size_t ncol) {
 
-        return knor::xmeans_coordinator::create(datafn, nrow, ncol, kmax,
-                max_iters, kbase::get_num_nodes(),
-                nthread, (centers.size() ? &centers[0]:NULL), init,
-                tolerance, dist_type, min_clust_size)->run();
+            return knor::xmeans_coordinator::create(datafn, nrow, ncol, kmax,
+                    max_iters, kbase::get_num_nodes(),
+                    nthread, (centers.size() ? &centers[0]:NULL), init,
+                    tolerance, dist_type, min_clust_size)->run();
+        }
+
+        inline kbase::cluster_t fit(py::buffer buf) {
+            /* Request a buffer descriptor from Python */
+            py::buffer_info info = buf.request();
+
+            /* Some sanity checks ... */
+            if (info.format != "d")
+                throw std::runtime_error(
+                        "Incompatible format: expected a double array!");
+
+            if (info.ndim != 2)
+                throw std::runtime_error("Incompatible buffer dimension!");
+
+            double* data = static_cast<double*>(info.ptr);
+
+            return knor::xmeans_coordinator::create("", info.shape[0],
+                    info.shape[1], kmax,
+                    max_iters, kbase::get_num_nodes(),
+                    nthread, (centers.size() ? &centers[0]:NULL),
+                    init, tolerance, dist_type,
+                    min_clust_size)->run(&data[0]);
         }
 };
 
@@ -320,21 +465,43 @@ class Gmeans {
         inline kbase::cluster_t fit(std::vector<double>& data, const size_t nrow,
                 const size_t ncol) {
 
-        return knor::gmeans_coordinator::create("", nrow, ncol, kmax,
-                max_iters, kbase::get_num_nodes(),
-                nthread, (centers.size() ? &centers[0]:NULL), init,
-                tolerance, dist_type, min_clust_size,
-                strictness)->run(&data[0]);
+            return knor::gmeans_coordinator::create("", nrow, ncol, kmax,
+                    max_iters, kbase::get_num_nodes(),
+                    nthread, (centers.size() ? &centers[0]:NULL), init,
+                    tolerance, dist_type, min_clust_size,
+                    strictness)->run(&data[0]);
         }
 
         inline kbase::cluster_t fit(const std::string& datafn, const size_t nrow,
                 const size_t ncol) {
 
-        return knor::gmeans_coordinator::create(datafn, nrow, ncol, kmax,
-                max_iters, kbase::get_num_nodes(),
-                nthread, (centers.size() ? &centers[0]:NULL), init,
-                tolerance, dist_type,
-                min_clust_size, strictness)->run();
+            return knor::gmeans_coordinator::create(datafn, nrow, ncol, kmax,
+                    max_iters, kbase::get_num_nodes(),
+                    nthread, (centers.size() ? &centers[0]:NULL), init,
+                    tolerance, dist_type,
+                    min_clust_size, strictness)->run();
+        }
+
+        inline kbase::cluster_t fit(py::buffer buf) {
+            /* Request a buffer descriptor from Python */
+            py::buffer_info info = buf.request();
+
+            /* Some sanity checks ... */
+            if (info.format != "d")
+                throw std::runtime_error(
+                        "Incompatible format: expected a double array!");
+
+            if (info.ndim != 2)
+                throw std::runtime_error("Incompatible buffer dimension!");
+
+            double* data = static_cast<double*>(info.ptr);
+
+            return knor::gmeans_coordinator::create("", info.shape[0],
+                    info.shape[1], kmax,
+                    max_iters, kbase::get_num_nodes(),
+                    nthread, (centers.size() ? &centers[0]:NULL), init,
+                    tolerance, dist_type, min_clust_size,
+                    strictness)->run(&data[0]);
         }
 };
 
@@ -400,9 +567,9 @@ PYBIND11_MODULE(knor, m) {
     --------
     import numpy as np
     n = 100; m = 10; k = 5
-    data = np.random.random((n, m)).flatten()
+    data = np.random.random((n, m))
     km = knor.Kmeans(k)
-    ret = km.fit(data, n, m)
+    ret = km.fit(data)
        )pbdoc",
             py::arg("k"), py::arg("max_iters")=20, py::arg("nthread")=2,
             py::arg("centers")=std::vector<double>(),
@@ -440,7 +607,18 @@ PYBIND11_MODULE(knor, m) {
         - The number of features in the dataset
        )pbdoc",
                     py::arg("datafn"), py::arg("nrow"), py::arg("ncol")
-                );
+                )
+            .def("fit", (kbase::cluster_t (Kmeans::*)(py::buffer)) &Kmeans::fit,
+                R"pbdoc(
+    Run the k-means algorithm on the dataset
+
+    Positional arguments:
+    ---------------------
+    data:
+        - 2D numpy.ndarray
+       )pbdoc",
+            py::arg("data")
+            );
 
     ////////////////////////// Kmeans++ //////////////////////////
 
@@ -471,7 +649,7 @@ PYBIND11_MODULE(knor, m) {
     --------
     import numpy as np
     n = 100; m = 10; k = 5
-    data = np.random.random((n, m)).flatten()
+    data = np.random.random((n, m))
     km = knor.KmeansPP(k, nstart=5)
     ret = km.fit(data, n, m)
        )pbdoc",
@@ -507,7 +685,18 @@ PYBIND11_MODULE(knor, m) {
         - The number of features in the dataset
        )pbdoc",
                     py::arg("datafn"), py::arg("nrow"), py::arg("ncol")
-                );
+                )
+            .def("fit", (kbase::pp_pair (KmeansPP::*)(py::buffer)) &KmeansPP::fit,
+                R"pbdoc(
+    Run the K-means++ algorithm on the dataset
+
+    Positional arguments:
+    ---------------------
+    data:
+        - 2D numpy.ndarray
+       )pbdoc",
+            py::arg("data")
+            );
 
     //////////////////////////  SKmeans //////////////////////////
 
@@ -542,9 +731,9 @@ PYBIND11_MODULE(knor, m) {
     --------
     import numpy as np
     n = 100; m = 10; k = 5
-    data = np.random.random((n, m)).flatten()
+    data = np.random.random((n, m))
     km = knor.SKmeans(k)
-    ret = km.fit(data, n, m)
+    ret = km.fit(data)
    )pbdoc",
             py::arg("k"), py::arg("max_iters")=20, py::arg("nthread")=2,
         py::arg("centers")=std::vector<double>(),
@@ -580,6 +769,17 @@ PYBIND11_MODULE(knor, m) {
         - The number of features in the dataset
        )pbdoc",
                     py::arg("datafn"), py::arg("nrow"), py::arg("ncol")
+                )
+            .def("fit", (kbase::cluster_t (SKmeans::*)(py::buffer)) &SKmeans::fit,
+    R"pbdoc(
+    Run the spherical k-means algorithm on the dataset
+
+    Positional arguments:
+    ---------------------
+    data:
+        - 2D numpy.ndarray
+       )pbdoc",
+                    py::arg("data")
                 );
 
     //////////////////////////  FuzzyCMeans //////////////////////////
@@ -617,6 +817,14 @@ PYBIND11_MODULE(knor, m) {
         "taxi", "sqeucl"
     fuzzindex: Randomization paramerter `fuzziness coefficient/index'
         (> 1 and < inf)
+
+    Example:
+    --------
+    import numpy as np
+    n = 100; m = 10; k = 5
+    data = np.random.random((n, m))
+    km = knor.FuzzyCMeans(k)
+    ret = km.fit(data)
    )pbdoc",
                     py::arg("k"), py::arg("max_iters")=20, py::arg("nthread")=2,
                     py::arg("centers")=std::vector<double>(),
@@ -637,14 +845,6 @@ PYBIND11_MODULE(knor, m) {
         - The number of samples in the dataset
     ncol:
         - The number of features in the dataset
-
-    Example:
-    --------
-    import numpy as np
-    n = 100; m = 10; k = 5
-    data = np.random.random((n, m)).flatten()
-    km = knor.FuzzyCMeans(k)
-    ret = km.fit(data, n, m)
        )pbdoc",
                     py::arg("data"), py::arg("nrow"), py::arg("ncol")
                 )
@@ -663,7 +863,19 @@ PYBIND11_MODULE(knor, m) {
         - The number of features in the dataset
        )pbdoc",
                     py::arg("datafn"), py::arg("nrow"), py::arg("ncol")
-                    );
+                    )
+            .def("fit", (kbase::cluster_t (FuzzyCMeans::*)
+                        (py::buffer)) &FuzzyCMeans::fit,
+    R"pbdoc(
+    Compute FuzzyCMeans on a dataset
+
+    Positional arguments:
+    ---------------------
+    data:
+        - A 2D numpy.ndarray
+       )pbdoc",
+                    py::arg("data")
+                );
 
     ////////////////////////// Kmedoids //////////////////////////
 
@@ -706,9 +918,9 @@ PYBIND11_MODULE(knor, m) {
     --------
     import numpy as np
     n = 100; m = 10; k = 5
-    data = np.random.random((n, m)).flatten()
+    data = np.random.random((n, m))
     km = knor.Kmedoids(k, sample_rate=.5)
-    ret = km.fit(data, n, m)
+    ret = km.fit(data)
    )pbdoc",
 
                     py::arg("k"), py::arg("max_iters")=20, py::arg("nthread")=2,
@@ -747,6 +959,18 @@ PYBIND11_MODULE(knor, m) {
         - The number of features in the dataset
        )pbdoc",
             py::arg("datafn"), py::arg("nrow"), py::arg("ncol")
+                    )
+            .def("fit", (kbase::cluster_t (Kmedoids::*)
+                        (py::buffer)) &Kmedoids::fit,
+    R"pbdoc(
+    Compute CLARA on a dataset
+
+    Positional arguments:
+    ---------------------
+    data:
+        - A 2D numpy.ndarray
+       )pbdoc",
+                    py::arg("data")
                     );
 
     ////////////////////////// Hmeans //////////////////////////
@@ -789,9 +1013,9 @@ PYBIND11_MODULE(knor, m) {
     --------
     import numpy as np
     n = 100; m = 10; kmax = 5
-    data = np.random.random((n, m)).flatten()
+    data = np.random.random((n, m))
     km = knor.Hmeans(k)
-    ret = km.fit(data, n, m)
+    ret = km.fit(data)
    )pbdoc",
 
                     py::arg("kmax"), py::arg("max_iters")=20,
@@ -831,6 +1055,17 @@ PYBIND11_MODULE(knor, m) {
         - The number of features in the dataset
        )pbdoc",
             py::arg("datafn"), py::arg("nrow"), py::arg("ncol")
+                )
+            .def("fit", (kbase::cluster_t (Hmeans::*)(py::buffer)) &Hmeans::fit,
+    R"pbdoc(
+    Compute Hierarchical clustering means on a dataset
+
+    Positional arguments:
+    ---------------------
+    data:
+        - A 2D numpy.ndarray
+       )pbdoc",
+                    py::arg("data")
                 );
 
     ////////////////////////// Xmeans //////////////////////////
@@ -872,9 +1107,9 @@ PYBIND11_MODULE(knor, m) {
     --------
     import numpy as np
     n = 100; m = 10; kmax = 5
-    data = np.random.random((n, m)).flatten()
+    data = np.random.random((n, m))
     km = knor.Xmeans(k)
-    ret = km.fit(data, n, m)
+    ret = km.fit(data)
    )pbdoc",
                 py::arg("kmax"), py::arg("max_iters")=20, py::arg("nthread")=2,
                 py::arg("centers")=std::vector<double>(),
@@ -912,7 +1147,18 @@ PYBIND11_MODULE(knor, m) {
         - The number of features in the dataset
        )pbdoc",
                     py::arg("datafn"), py::arg("nrow"), py::arg("ncol")
-                    );
+                    )
+            .def("fit", (kbase::cluster_t (Xmeans::*)(py::buffer)) &Xmeans::fit,
+    R"pbdoc(
+    Compute X-means clustering means on a dataset
+
+    Positional arguments:
+    ---------------------
+    data:
+        - A 2D numpy.ndarray
+       )pbdoc",
+                    py::arg("data")
+                );
 
     ////////////////////////// Gmeans //////////////////////////
 
@@ -957,9 +1203,9 @@ PYBIND11_MODULE(knor, m) {
     --------
     import numpy as np
     n = 100; m = 10; kmax = 5
-    data = np.random.random((n, m)).flatten()
+    data = np.random.random((n, m))
     km = knor.Gmeans(k)
-    ret = km.fit(data, n, m)
+    ret = km.fit(data)
    )pbdoc",
 
                     py::arg("kmax"), py::arg("max_iters")=20, py::arg("nthread")=2,
@@ -1000,6 +1246,17 @@ PYBIND11_MODULE(knor, m) {
         - The number of features in the dataset
        )pbdoc",
                     py::arg("datafn"), py::arg("nrow"), py::arg("ncol")
+                )
+            .def("fit", (kbase::cluster_t (Gmeans::*)(py::buffer)) &Gmeans::fit,
+    R"pbdoc(
+    Compute G-means clustering means on a dataset
+
+    Positional arguments:
+    ---------------------
+    data:
+        - A 2D numpy.ndarray
+       )pbdoc",
+                    py::arg("data")
                 );
 
     // Versioning information
