@@ -98,14 +98,13 @@ apt-get install python3-dev  # for python3.x installs
 
 5.
 ```
-```
-
-### Solution
-```
 fatal error: 'pybind11/pybind11.h' file not found
 #include <pybind11/pybind11.h>
          ^~~~~~~~~~~~~~~~~~~~~
 ```
+
+### Solution
+
 This occurs on Mac and is best solved by utilizing virtual environments as
 follows:
 
@@ -118,6 +117,15 @@ source <desired-path>/bin/activate
 Where `python-version` is either `python2.7` or `python3`.
 
 Then install `pybind11` by `pip install pybind11` then attempt to install `knor`
+
+6.
+```
+ImportError: No module named 'setuptools'
+```
+
+Install setuptools `pip install -U setuptools`
+
+### Solution
 
 
 ## Documentation
