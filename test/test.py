@@ -42,7 +42,8 @@ def dim_test_c_comp():
 
 def dim_test_c_im():
     data = np.random.random((10,3))
-    centers = np.random.random((3,3)).flatten() # TODO: permit 2D ndarray
+    centers = np.random.random((3,3))
+    print("\nYeaaahh!\n")
     km = knor.Kmeans(3, centers=centers) # TODO: Infer k
     return km.fit(data)
 

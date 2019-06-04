@@ -35,6 +35,26 @@ class Kmeans {
 
         }
 
+        Kmeans(const unsigned k, size_t max_iters, unsigned nthread,
+                py::buffer centers, std::string& init,
+                double tolerance, std::string& dist_type) : k(k),
+        max_iters(max_iters), nthread(nthread),
+        init(init), tolerance(tolerance), dist_type(dist_type){
+            py::buffer_info info = centers.request();
+
+            /* Some sanity checks ... */
+            if (info.format != "d")
+                throw std::runtime_error(
+                        "Incompatible centers format: expected a double array!");
+
+            if (info.ndim != 2)
+                throw std::runtime_error("Incompatible centers dimension!");
+
+            this->centers.resize(info.shape[0]*info.shape[1]);
+            std::copy(this->centers.begin(), this->centers.end(),
+                    static_cast<double*>(info.ptr));
+        }
+
         inline kbase::cluster_t fit(std::vector<double>& data, const size_t nrow,
                 const size_t ncol) {
 
@@ -526,7 +546,7 @@ PYBIND11_MODULE(knor, m) {
            Gmeans
     )pbdoc";
 
-    ////////////////////////// Kmeans //////////////////////////
+    ////////////////////////// cluster_t //////////////////////////
 
     py::class_<kbase::cluster_t>(m, "cluster_t")
             .def(py::init(), "Create a cluster_t return object")
@@ -547,7 +567,7 @@ PYBIND11_MODULE(knor, m) {
                     return !(ob1 == ob2);
             }, "Not Equal operator for cluster_t object");
 
-    //m.def("Kmeans")
+    ////////////////////////// Kmeans //////////////////////////
 
     py::class_<Kmeans>(m, "Kmeans")
             .def(py::init<const unsigned, size_t,
@@ -593,6 +613,12 @@ PYBIND11_MODULE(knor, m) {
             py::arg("init")="kmeanspp", py::arg("tolerance")=-1,
             py::arg("dist_type")="eucl"
             )
+            .def(py::init<const unsigned, size_t, unsigned, py::buffer,
+                    std::string&, double, std::string&>(),
+            py::arg("k"), py::arg("max_iters")=20, py::arg("nthread")=2,
+            py::arg("centers")=NULL,
+            py::arg("init")="kmeanspp", py::arg("tolerance")=-1,
+            py::arg("dist_type")="eucl")
             .def("fit", (kbase::cluster_t (Kmeans::*)(std::vector<double>&,
                             const size_t, const size_t)) &Kmeans::fit,
                 R"pbdoc(
