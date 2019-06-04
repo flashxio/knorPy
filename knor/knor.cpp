@@ -530,6 +530,13 @@ PYBIND11_MODULE(knor, m) {
 
     py::class_<kbase::cluster_t>(m, "cluster_t")
             .def(py::init(), "Create a cluster_t return object")
+            .def_readonly("k", &kbase::cluster_t::k)
+            .def_readonly("nrow", &kbase::cluster_t::nrow)
+            .def_readonly("ncol", &kbase::cluster_t::ncol)
+            .def_readonly("sizes", &kbase::cluster_t::assignment_count)
+            .def_readonly("iters", &kbase::cluster_t::iters)
+            .def_readonly("centroids", &kbase::cluster_t::centroids)
+            .def_readonly("cluster", &kbase::cluster_t::assignments)
             .def("__repr__", &kbase::cluster_t::to_str);
 
     py::class_<Kmeans>(m, "Kmeans")
