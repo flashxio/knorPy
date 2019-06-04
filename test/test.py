@@ -54,7 +54,7 @@ def dexm_test_c_comp():
 
 def dexm_test_c_im():
     k = 2
-    centers = np.random.random((k,5)).flatten()
+    centers = np.random.random((k,5))
     km = knor.Kmeans(k, centers=centers)
     return km.fit(FN, 50, 5)
 

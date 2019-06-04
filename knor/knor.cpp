@@ -31,7 +31,7 @@ class Kmeans {
                 std::vector<double>& centers, std::string& init,
                 double tolerance, std::string& dist_type) : k(k),
         max_iters(max_iters), nthread(nthread), centers(centers),
-        init(init), tolerance(tolerance), dist_type(dist_type){
+        init(init), tolerance(tolerance), dist_type(dist_type) {
 
         }
 
@@ -153,9 +153,28 @@ class SKmeans {
     public:
         SKmeans(const unsigned k, size_t max_iters, unsigned nthread,
                 std::vector<double>& centers, std::string& init,
-                double tolerance) : k(k),
-        max_iters(max_iters), nthread(nthread), centers(centers),
-        init(init), tolerance(tolerance) {
+                double tolerance) : k(k), max_iters(max_iters),
+        nthread(nthread), init(init), tolerance(tolerance) {
+        }
+
+        SKmeans(const unsigned k, size_t max_iters, unsigned nthread,
+                py::buffer centers, std::string& init, double tolerance):
+            k(k), max_iters(max_iters), nthread(nthread),
+            init(init), tolerance(tolerance) {
+
+            py::buffer_info info = centers.request();
+
+            /* Some sanity checks ... */
+            if (info.format != "d")
+                throw std::runtime_error(
+                        "Incompatible centers format: expected a double array!");
+
+            if (info.ndim != 2)
+                throw std::runtime_error("Incompatible centers dimension!");
+
+            this->centers.resize(info.shape[0]*info.shape[1]);
+            std::copy(this->centers.begin(), this->centers.end(),
+                    static_cast<double*>(info.ptr));
         }
 
         inline kbase::cluster_t fit(std::vector<double>& data,
@@ -220,6 +239,29 @@ class FuzzyCMeans {
 
             }
 
+        FuzzyCMeans(const unsigned k, const unsigned max_iters,
+                const unsigned nthread, py::buffer centers,
+                const std::string& init, const double tolerance,
+                const std::string& dist_type, const unsigned fuzzindex) :
+            k(k), max_iters(max_iters), nthread(nthread),
+            init(init), tolerance(tolerance), dist_type(dist_type),
+            fuzzindex(fuzzindex) {
+
+            py::buffer_info info = centers.request();
+
+            /* Some sanity checks ... */
+            if (info.format != "d")
+                throw std::runtime_error(
+                        "Incompatible centers format: expected a double array!");
+
+            if (info.ndim != 2)
+                throw std::runtime_error("Incompatible centers dimension!");
+
+            this->centers.resize(info.shape[0]*info.shape[1]);
+            std::copy(this->centers.begin(), this->centers.end(),
+                    static_cast<double*>(info.ptr));
+        }
+
         inline kbase::cluster_t fit(std::vector<double>& data,
                 const size_t nrow, const size_t ncol) {
 
@@ -280,6 +322,29 @@ class Kmedoids {
             init(init), tolerance(tolerance), dist_type(dist_type),
             sample_rate(sample_rate) {
             }
+
+        Kmedoids(const unsigned k, const unsigned max_iters,
+                const unsigned nthread, py::buffer centers,
+                const std::string& init, const double tolerance,
+                const std::string& dist_type, const double sample_rate):
+            k(k), max_iters(max_iters), nthread(nthread),
+            init(init), tolerance(tolerance), dist_type(dist_type),
+            sample_rate(sample_rate) {
+
+            py::buffer_info info = centers.request();
+
+            /* Some sanity checks ... */
+            if (info.format != "d")
+                throw std::runtime_error(
+                        "Incompatible centers format: expected a double array!");
+
+            if (info.ndim != 2)
+                throw std::runtime_error("Incompatible centers dimension!");
+
+            this->centers.resize(info.shape[0]*info.shape[1]);
+            std::copy(this->centers.begin(), this->centers.end(),
+                    static_cast<double*>(info.ptr));
+        }
 
         inline kbase::cluster_t fit(std::vector<double>& data, const size_t nrow,
                 const size_t ncol) {
@@ -352,6 +417,30 @@ class Hmeans {
             min_clust_size(min_clust_size)  {
             }
 
+
+        Hmeans(const unsigned kmax, const unsigned max_iters,
+                const unsigned nthread, py::buffer centers,
+                const std::string& init, const double tolerance,
+                const std::string& dist_type, const unsigned min_clust_size) :
+            kmax(kmax), max_iters(max_iters), nthread(nthread),
+            init(init), tolerance(tolerance), dist_type(dist_type),
+            min_clust_size(min_clust_size)  {
+
+            py::buffer_info info = centers.request();
+
+            /* Some sanity checks ... */
+            if (info.format != "d")
+                throw std::runtime_error(
+                        "Incompatible centers format: expected a double array!");
+
+            if (info.ndim != 2)
+                throw std::runtime_error("Incompatible centers dimension!");
+
+            this->centers.resize(info.shape[0]*info.shape[1]);
+            std::copy(this->centers.begin(), this->centers.end(),
+                    static_cast<double*>(info.ptr));
+        }
+
         inline kbase::cluster_t fit(std::vector<double>& data,
                 const size_t nrow, const size_t ncol) {
 
@@ -414,6 +503,29 @@ class  Xmeans {
             min_clust_size(min_clust_size) {
 
             }
+
+        Xmeans(const unsigned kmax, const unsigned max_iters,
+                const unsigned nthread, py::buffer centers,
+                const std::string& init, const double tolerance,
+                const std::string& dist_type, const unsigned min_clust_size) :
+            kmax(kmax), max_iters(max_iters), nthread(nthread),
+            init(init), tolerance(tolerance), dist_type(dist_type),
+            min_clust_size(min_clust_size)  {
+
+            py::buffer_info info = centers.request();
+
+            /* Some sanity checks ... */
+            if (info.format != "d")
+                throw std::runtime_error(
+                        "Incompatible centers format: expected a double array!");
+
+            if (info.ndim != 2)
+                throw std::runtime_error("Incompatible centers dimension!");
+
+            this->centers.resize(info.shape[0]*info.shape[1]);
+            std::copy(this->centers.begin(), this->centers.end(),
+                    static_cast<double*>(info.ptr));
+        }
 
         inline kbase::cluster_t fit(std::vector<double>& data, const size_t nrow,
                 const size_t ncol) {
@@ -481,6 +593,30 @@ class Gmeans {
             min_clust_size(min_clust_size), strictness(strictness) {
 
             }
+
+        Gmeans(const unsigned kmax, const unsigned max_iters,
+                const unsigned nthread, py::buffer centers,
+                const std::string& init, const double tolerance,
+                const std::string& dist_type, const unsigned min_clust_size,
+                const short strictness) :
+            kmax(kmax), max_iters(max_iters), nthread(nthread),
+            init(init), tolerance(tolerance), dist_type(dist_type),
+            min_clust_size(min_clust_size), strictness(strictness) {
+
+            py::buffer_info info = centers.request();
+
+            /* Some sanity checks ... */
+            if (info.format != "d")
+                throw std::runtime_error(
+                        "Incompatible centers format: expected a double array!");
+
+            if (info.ndim != 2)
+                throw std::runtime_error("Incompatible centers dimension!");
+
+            this->centers.resize(info.shape[0]*info.shape[1]);
+            std::copy(this->centers.begin(), this->centers.end(),
+                    static_cast<double*>(info.ptr));
+        }
 
         inline kbase::cluster_t fit(std::vector<double>& data, const size_t nrow,
                 const size_t ncol) {
@@ -781,6 +917,12 @@ PYBIND11_MODULE(knor, m) {
             py::arg("k"), py::arg("max_iters")=20, py::arg("nthread")=2,
         py::arg("centers")=std::vector<double>(),
         py::arg("init")="kmeanspp", py::arg("tolerance")=-1)
+
+            .def(py::init<const unsigned, size_t, unsigned,
+                py::buffer, std::string&, double>(),
+            py::arg("k"), py::arg("max_iters")=20, py::arg("nthread")=2,
+            py::arg("centers")=NULL,
+            py::arg("init")="kmeanspp", py::arg("tolerance")=-1)
             .def("fit", (kbase::cluster_t (SKmeans::*)(std::vector<double>&,
                             const size_t, const size_t)) &SKmeans::fit,
     R"pbdoc(
@@ -873,8 +1015,15 @@ PYBIND11_MODULE(knor, m) {
                     py::arg("centers")=std::vector<double>(),
                     py::arg("init")="forgy", py::arg("tolerance")=-1,
                     py::arg("dist_type")="cos", py::arg("fuzzindex")=2
-
                         )
+            .def(py::init<const unsigned, const unsigned,
+                    const unsigned, py::buffer,
+                    const std::string&, const double, const std::string&,
+                    const unsigned>(),
+                    py::arg("k"), py::arg("max_iters")=20, py::arg("nthread")=2,
+                    py::arg("centers")=NULL,
+                    py::arg("init")="forgy", py::arg("tolerance")=-1,
+                    py::arg("dist_type")="cos", py::arg("fuzzindex")=2)
             .def("fit", (kbase::cluster_t (FuzzyCMeans::*)(std::vector<double>&,
                         const size_t, const size_t)) &FuzzyCMeans::fit,
     R"pbdoc(
@@ -969,8 +1118,14 @@ PYBIND11_MODULE(knor, m) {
                     py::arg("k"), py::arg("max_iters")=20, py::arg("nthread")=2,
                     py::arg("centers")=std::vector<double>(),
                     py::arg("init")="forgy", py::arg("tolerance")=-1,
-                    py::arg("dist_type")="taxi", py::arg("sample_rate")=.2
-                            )
+                    py::arg("dist_type")="taxi", py::arg("sample_rate")=.2)
+            .def(py::init<const unsigned, const unsigned, const unsigned,
+                    py::buffer, const std::string&, const double,
+                    const std::string&, const double>(),
+                    py::arg("k"), py::arg("max_iters")=20, py::arg("nthread")=2,
+                    py::arg("centers")=NULL,
+                    py::arg("init")="forgy", py::arg("tolerance")=-1,
+                    py::arg("dist_type")="taxi", py::arg("sample_rate")=.2)
             .def("fit", (kbase::cluster_t (Kmedoids::*)(std::vector<double>&,
                             const size_t, const size_t)) &Kmedoids::fit,
     R"pbdoc(
@@ -1057,7 +1212,7 @@ PYBIND11_MODULE(knor, m) {
     import numpy as np
     n = 100; m = 10; kmax = 5
     data = np.random.random((n, m))
-    km = knor.Hmeans(k)
+    km = knor.Hmeans(kmax)
     ret = km.fit(data)
    )pbdoc",
 
@@ -1067,6 +1222,15 @@ PYBIND11_MODULE(knor, m) {
                     py::arg("init")="forgy", py::arg("tolerance")=-1,
                     py::arg("dist_type")="eucl", py::arg("min_clust_size")=2
                             )
+            .def(py::init<const unsigned,
+                    const unsigned, const unsigned,
+                    py::buffer, const std::string&,
+                    const double, const std::string&,
+                    const unsigned>(),
+                    py::arg("kmax"), py::arg("max_iters")=20,
+                    py::arg("nthread")=2, py::arg("centers")=NULL,
+                    py::arg("init")="forgy", py::arg("tolerance")=-1,
+                    py::arg("dist_type")="eucl", py::arg("min_clust_size")=2)
             .def("fit", (kbase::cluster_t (Hmeans::*)(std::vector<double>&,
                             const size_t, const size_t)) &Hmeans::fit,
     R"pbdoc(
@@ -1151,14 +1315,20 @@ PYBIND11_MODULE(knor, m) {
     import numpy as np
     n = 100; m = 10; kmax = 5
     data = np.random.random((n, m))
-    km = knor.Xmeans(k)
+    km = knor.Xmeans(kmax)
     ret = km.fit(data)
    )pbdoc",
                 py::arg("kmax"), py::arg("max_iters")=20, py::arg("nthread")=2,
                 py::arg("centers")=std::vector<double>(),
                 py::arg("init")="forgy", py::arg("tolerance")=-1,
-                py::arg("dist_type")="eucl", py::arg("min_clust_size")=2
-                )
+                py::arg("dist_type")="eucl", py::arg("min_clust_size")=2)
+        .def(py::init<const unsigned, const unsigned,
+                const unsigned, py::buffer, const std::string&,
+                const double, const std::string&, const unsigned>(),
+                py::arg("kmax"), py::arg("max_iters")=20,
+                py::arg("nthread")=2, py::arg("centers")=NULL,
+                py::arg("init")="forgy", py::arg("tolerance")=-1,
+                py::arg("dist_type")="eucl", py::arg("min_clust_size")=2)
             .def("fit", (kbase::cluster_t (Xmeans::*)(std::vector<double>&,
                             const size_t, const size_t)) &Xmeans::fit,
     R"pbdoc(
@@ -1247,16 +1417,24 @@ PYBIND11_MODULE(knor, m) {
     import numpy as np
     n = 100; m = 10; kmax = 5
     data = np.random.random((n, m))
-    km = knor.Gmeans(k)
+    km = knor.Gmeans(kmax)
     ret = km.fit(data)
    )pbdoc",
-
-                    py::arg("kmax"), py::arg("max_iters")=20, py::arg("nthread")=2,
+                    py::arg("kmax"), py::arg("max_iters")=20,
+                    py::arg("nthread")=2,
                     py::arg("centers")=std::vector<double>(),
                     py::arg("init")="forgy", py::arg("tolerance")=-1,
                     py::arg("dist_type")="eucl", py::arg("min_clust_size")=2,
-                    py::arg("strictness")=4
-                    )
+                    py::arg("strictness")=4)
+            .def(py::init<const unsigned, const unsigned, const unsigned,
+                    py::buffer, const std::string&,
+                    const double, const std::string&,
+                    const unsigned, const short>(),
+                    py::arg("kmax"), py::arg("max_iters")=20,
+                    py::arg("nthread")=2, py::arg("centers")=NULL,
+                    py::arg("init")="forgy", py::arg("tolerance")=-1,
+                    py::arg("dist_type")="eucl", py::arg("min_clust_size")=2,
+                    py::arg("strictness")=4)
 
             .def("fit", (kbase::cluster_t (Gmeans::*)(std::vector<double>&,
                             const size_t, const size_t)) &Gmeans::fit,
