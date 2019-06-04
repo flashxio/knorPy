@@ -537,7 +537,17 @@ PYBIND11_MODULE(knor, m) {
             .def_readonly("iters", &kbase::cluster_t::iters)
             .def_readonly("centroids", &kbase::cluster_t::centroids)
             .def_readonly("cluster", &kbase::cluster_t::assignments)
-            .def("__repr__", &kbase::cluster_t::to_str);
+            .def("__repr__", &kbase::cluster_t::to_str)
+            .def("__eq__", [](const kbase::cluster_t& ob1,
+                        const kbase::cluster_t& ob2) -> bool {
+                    return ob1 == ob2;
+            }, "Equality operator for cluster_t object")
+            .def("__ne__", [](const kbase::cluster_t& ob1,
+                        const kbase::cluster_t& ob2) -> bool {
+                    return !(ob1 == ob2);
+            }, "Not Equal operator for cluster_t object");
+
+    //m.def("Kmeans")
 
     py::class_<Kmeans>(m, "Kmeans")
             .def(py::init<const unsigned, size_t,
