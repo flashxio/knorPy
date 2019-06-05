@@ -17,7 +17,7 @@ from setuptools.command.build_ext import build_ext
 from setuptools.command.build_clib import build_clib
 import setuptools
 
-__version__ = '0.0.2'
+__version__ = '0.0.3'
 
 _REPO_ISSUES_ = "https://github.com/flashxio/knorPy/issues"
 _OS_SUPPORTED_ = {"linux":"linux", "mac":"darwin"}

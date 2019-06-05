@@ -101,6 +101,7 @@ apt-get install python3-dev  # for python3.x installs
 fatal error: 'pybind11/pybind11.h' file not found
 #include <pybind11/pybind11.h>
          ^~~~~~~~~~~~~~~~~~~~~
+ImportError: No module named pybind11
 ```
 
 ### Solution
@@ -123,7 +124,7 @@ Then install `pybind11` by `pip install pybind11` then attempt to install `knor`
 ImportError: No module named 'setuptools'
 ```
 
-Install setuptools `pip install -U setuptools`
+Install setuptools: `pip install -U setuptools`
 
 ### Solution
 
