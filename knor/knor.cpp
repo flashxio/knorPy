@@ -687,12 +687,33 @@ PYBIND11_MODULE(knor, m) {
     py::class_<kbase::cluster_t>(m, "cluster_t")
             .def(py::init(), "Create a cluster_t return object")
             .def_readonly("k", &kbase::cluster_t::k)
+            .def("get_k", [](const kbase::cluster_t& o) {
+                    return o.k;
+                    }, "Return the number of clusters")
             .def_readonly("nrow", &kbase::cluster_t::nrow)
+            .def("get_nrow", [](const kbase::cluster_t& o) {
+                    return o.nrow;
+                    }, "Return the number of samples")
             .def_readonly("ncol", &kbase::cluster_t::ncol)
+            .def("get_ncol", [](const kbase::cluster_t& o) {
+                    return o.ncol;
+                    }, "Return the number of features")
             .def_readonly("sizes", &kbase::cluster_t::assignment_count)
+            .def("get_sizes", [](const kbase::cluster_t& o) {
+                    return o.assignment_count;
+                    }, "Return the count of samples assigned to a cluster")
             .def_readonly("iters", &kbase::cluster_t::iters)
+            .def("get_iters", [](const kbase::cluster_t& o) {
+                    return o.iters;
+                    }, "Return the number of iterations")
             .def_readonly("centroids", &kbase::cluster_t::centroids)
+            .def("get_centroids", [](const kbase::cluster_t& o) {
+                    return o.centroids;
+                    }, "Return the centroids/cluster representatives")
             .def_readonly("cluster", &kbase::cluster_t::assignments)
+            .def("get_clusters", [](const kbase::cluster_t& o) {
+                    return o.assignments;
+                    }, "Return the assignment of each sample to a cluster")
             .def("__repr__", &kbase::cluster_t::to_str)
             .def("__eq__", [](const kbase::cluster_t& ob1,
                         const kbase::cluster_t& ob2) -> bool {

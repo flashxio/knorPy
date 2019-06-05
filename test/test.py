@@ -21,7 +21,7 @@
 
 import sys
 
-__knor_version__ = "0.0.3"
+__knor_version__ = "0.0.3a"
 
 PYTHON_VERSION = sys.version_info[0]
 if PYTHON_VERSION == 2:
@@ -49,7 +49,6 @@ def dim_test_c_comp():
 def dim_test_c_im():
     data = np.random.random((10,3))
     centers = np.random.random((3,3))
-    print("\nYeaaahh!\n")
     km = knor.Kmeans(3, centers=centers) # TODO: Infer k
     return km.fit(data)
 
