@@ -30,8 +30,8 @@ py3:
 	python3 setup.py build
 
 install:
-	#python setup.py install
-	python3 setup.py install
+	python setup.py install
+	#python3 setup.py install
 
 dist:
 	python setup.py sdist
