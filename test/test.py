@@ -21,11 +21,17 @@
 
 import sys
 
+__knor_version__ = "0.0.3"
+
 PYTHON_VERSION = sys.version_info[0]
 if PYTHON_VERSION == 2:
-    COMMON_INSTALL_LOC = "/usr/local/lib/python2.7/dist-packages"
+    COMMON_INSTALL_LOC = \
+        "/usr/local/lib/python2.7/dist-packages/knor-"+ \
+            __knor_version__ + "-py2.7-linux-x86_64.egg"
 elif PYTHON_VERSION == 3:
-    COMMON_INSTALL_LOC = "/usr/local/lib/python3.5/dist-packages"
+    COMMON_INSTALL_LOC = \
+    "/usr/local/lib/python3.5/dist-packages/knor-" + \
+        __knor_version__ + "-py3.5-linux-x86_64.egg"
 
 if COMMON_INSTALL_LOC not in sys.path:
     sys.path.append(COMMON_INSTALL_LOC)
