@@ -21,7 +21,7 @@
 
 import sys
 
-__knor_version__ = "0.0.4"
+__knor_version__ = "0.0.5"
 
 PYTHON_VERSION = sys.version_info[0]
 if PYTHON_VERSION == 2:
