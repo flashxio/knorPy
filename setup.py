@@ -6,12 +6,6 @@ if PYTHON_VERSION == 2:
     from exceptions import RuntimeError
 
 from glob import glob
-# from distutils.errors import DistutilsSetupError
-# from distutils.command.build_clib import build_clib
-# from distutils.core import setup, Extension
-# from Cython.Build import cythonize
-# from Cython.Distutils import build_ext
-# from utils import find_header_loc
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
 from setuptools.command.build_clib import build_clib
@@ -268,17 +262,19 @@ setup(
     name="knor",
     version=__version__,
     author="Disa Mhembere",
-    author_email="disa@jhu.edu",
-    description="A fast parallel k-means library for Linux and Mac",
-    long_description="The k-means NUMA Optimized Routine library or " +\
+    author_email="disa@cs.jhu.edu",
+    description="A fast parallel clustering library for Linux and Mac",
+    long_description="The k* NUMA Optimized Routine library or " +\
     "knor is a highly optimized and fast library for computing " +\
-    "k-means in parallel with accelerations for Non-Uniform Memory " +\
+    "clustering in parallel with accelerations for Non-Uniform Memory " +\
     "Access (NUMA) architectures",
     url="https://github.com/flashxio/knor",
     license="Apache License, Version 2.0",
-    keywords="kmeans k-means parallel clustering machine-learning",
+    keywords="Parallel clustering machine-learning",
     install_requires=[
+        "setuptools",
         "numpy",
+        "pybind11",
         ],
     package_dir = {"knor": "knor"},
     packages=["knor", "knor.Exceptions"],

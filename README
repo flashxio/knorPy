@@ -3,9 +3,8 @@
 [![Build
 Status](https://travis-ci.org/flashxio/knorPy.svg?branch=master)](https://travis-ci.org/flashxio/knorPy)
 
-These are Python 2.7+ (Including Python 3) bindings for the standalone
-machine in-memory portion of the
-`knor` (k-means NUMA Optimized Routines Library) as known as `knori`. See the
+These are Python 2.7+ and Python 3 bindings for the standalone
+machine in-memory portion of the clustering NUMA Optimized Routines. See the
 full C++ library for details: https://github.com/flashxio/knor
 
 ## Supported OSes
@@ -18,6 +17,7 @@ The `knor` python package has been tested on the following OSes:
 ## Python Dependencies
 
 - Numpy: `pip install -U numpy`
+- Setuptools: `pip install -U setuptools`
 - pybind11: `pip install -U pybind11`
 
 ## Mac Installation
@@ -132,8 +132,15 @@ Install setuptools: `pip install -U setuptools`
 ## Documentation
 
 ```
-import knor
-help(knor.Kmeans)
+from knor import *
+help(Kmeans)
+help(SKmeans)
+help(KmeansPP)
+help(FuzzyCMeans)
+help(Kmedoids)
+help(Xmeans)
+help(Hmeans)
+help(Gmeans)
 ```
 
 ## Example
@@ -155,6 +162,6 @@ The `cluster_t` return object has the following attributes:
 - `nrow`: The number of rows/samples in the dataset
 - `ncol`: Then number of columns/features in the dataset
 - `sizes`: The number of samples in each cluster/centroid
-- `iters`: The number of iterations of k-means performed
+- `iters`: The number of iterations performed
 - `centroids`: A `list` where each row is a cluster center
 - `clusters`: A `list` index for which cluster each sample falls into
