@@ -120,13 +120,18 @@ Where `python-version` is either `python2.7` or `python3`.
 Then install `pybind11` by `pip install pybind11` then attempt to install `knor`
 
 6.
-```
 ImportError: No module named 'setuptools'
 ```
 
-Install setuptools: `pip install -U setuptools`
-
 ### Solution
+
+Use a recent version of `setuptools` from `pip`
+
+```
+sudo apt remove python-setuptools python3-setuptool
+pip install -U setuptools
+pip3 install -U setuptools
+```
 
 
 ## Documentation
